@@ -133,8 +133,8 @@ const DOSHAS = {
 // Health conditions. avoid lists pose ids, avoidBreaths lists breath ids.
 const CONDITIONS = {
   lowback: {
-    avoid: ["uttanasana", "paschimottanasana", "upavistha-konasana", "ardha-matsyendrasana", "janu-sirsasana", "navasana", "dhanurasana", "ushtrasana", "urdhva-mukha", "halasana", "sarvangasana", "prasarita", "parsvottanasana", "parivrtta-trikonasana", "tada-kapotasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana", "parivrtta-utkatasana", "parivrtta-parsvakonasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana", "marichyasana-a", "parivrtta-janu-sirsasana", "chakki-chalanasana", "anantasana"],
-    avoidBreaths: ["wood-chopping"],
+    avoid: ["uttanasana", "paschimottanasana", "upavistha-konasana", "ardha-matsyendrasana", "janu-sirsasana", "navasana", "dhanurasana", "ushtrasana", "urdhva-mukha", "halasana", "sarvangasana", "prasarita", "parsvottanasana", "parivrtta-trikonasana", "tada-kapotasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana", "parivrtta-utkatasana", "parivrtta-parsvakonasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana", "marichyasana-a", "parivrtta-janu-sirsasana", "chakki-chalanasana", "anantasana", "eka-pada-rajakapotasana"],
+    avoidBreaths: ["wood-chopping", "kapalabhati"],
     tip: "Bend your knees in every forward fold. Choose Reclined Hamstring Stretch over seated folds.",
   },
   neck: {
@@ -148,24 +148,24 @@ const CONDITIONS = {
     tip: "Pad the knees with a folded blanket. Keep the bend in Chair and Warrior poses small.",
   },
   wrist: {
-    avoid: ["adho-mukha", "urdhva-mukha", "phalakasana", "vasisthasana", "vyaghrasana", "eka-pada-adho-mukha", "chaturanga", "purvottanasana", "bakasana", "chakrasana"],
+    avoid: ["adho-mukha", "urdhva-mukha", "phalakasana", "vasisthasana", "vyaghrasana", "eka-pada-adho-mukha", "chaturanga", "purvottanasana", "bakasana", "chakrasana", "uttana-pristhasana"],
     avoidBreaths: [],
     tip: "Do Cat-Cow on fists or forearms. In sun salutations, use a wall instead of the floor.",
   },
   shoulder: {
-    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana", "uttana-shishosana", "parsva-balasana", "makara-adho-mukha"],
+    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana", "uttana-shishosana", "parsva-balasana", "makara-adho-mukha", "adho-mukha"],
     avoidBreaths: [],
     tip: "Keep the arms below shoulder height when it hurts. Hands on hips is fine.",
   },
   highbp: {
-    avoid: ["prasarita", "uttanasana", "adho-mukha", "dhanurasana", "ushtrasana", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "matsyasana", "chakrasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana"],
+    avoid: ["prasarita", "uttanasana", "adho-mukha", "dhanurasana", "ushtrasana", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "matsyasana", "chakrasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana", "uttanpadasana"],
     avoidBreaths: ["kapalabhati", "surya-bhedana", "wood-chopping"],
     tip: "Keep the head above the heart. Never hold the breath. Skip every hold in breathing practices.",
   },
   lowbp: {
-    avoid: ["ushtrasana", "ardha-chandrasana", "parivrtta-trikonasana", "matsyasana", "chakrasana"],
-    avoidBreaths: ["sheetali", "chandra-bhedana", "sheetkari"],
-    tip: "Come up slowly from forward folds and from lying down. In sun salutations, pause in each forward fold and rise on a slow breath.",
+    avoid: ["ushtrasana", "ardha-chandrasana", "parivrtta-trikonasana", "matsyasana", "chakrasana", "halasana", "sarvangasana", "ardha-pincha-mayurasana", "bakasana", "urdhva-prasarita-eka-padasana", "natarajasana", "ardha-chakrasana"],
+    avoidBreaths: ["sheetali", "chandra-bhedana", "sheetkari", "kapalabhati", "wood-chopping"],
+    tip: "Come up slowly from forward folds and from lying down. Keep the eyes open. Keep the head above the heart. In sun salutations, pause in each forward fold and rise on a slow breath.",
   },
   eyes: {
     avoid: ["prasarita", "uttanasana", "adho-mukha", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "chakrasana", "urdhva-prasarita-eka-padasana"],

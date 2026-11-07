@@ -73,7 +73,7 @@ const POSES = [
     avoid: ["Locking the front knee. Keep a micro bend.", "Collapsing the chest towards the floor. Keep both sides of the waist long."],
     easier: "Rest the bottom hand higher on the leg or on a chair.",
     benefits: "Stretches hamstrings, hips and the side body. Strengthens the legs.",
-    skip: "With low blood pressure, rise slowly. With neck pain, look down.",
+    skip: "With low blood pressure, rise slowly. With neck pain, look down. With a back injury, keep the bottom hand high on the leg.",
   },
   {
     id: "parsvakonasana", sk: "Utthita Parsvakonasana", en: "Extended Side Angle", cat: "standing", lvl: 1, sided: true,
@@ -81,7 +81,7 @@ const POSES = [
     avoid: ["Dumping weight into the forearm. Lift the chest away from the thigh.", "Front knee falling inwards."],
     easier: "Keep the top hand on the hip.",
     benefits: "Strengthens the legs. Opens the side body and hips.",
-    skip: "With shoulder pain, keep the top arm low.",
+    skip: "With shoulder pain, keep the top arm low. With neck pain, look down.",
   },
   {
     id: "prasarita", sk: "Prasarita Padottanasana", en: "Wide-Legged Forward Fold", cat: "forward", lvl: 1,
@@ -97,7 +97,7 @@ const POSES = [
     avoid: ["Locking the knees and pulling on the back of the legs.", "Coming up fast. Rise slowly to avoid dizziness."],
     easier: "Rest the forearms on the thighs with the knees bent.",
     benefits: "Releases the back and hamstrings. Calms the nervous system.",
-    skip: "With a disc injury in the lower back or with high blood pressure.",
+    skip: "With a disc injury in the lower back or with high blood pressure. With sciatica, a hernia or a heart condition, fold only halfway with the hands on the thighs.",
   },
   {
     id: "ardha-chandrasana", sk: "Ardha Chandrasana", en: "Half Moon", cat: "balance", lvl: 2, sided: true,
@@ -105,7 +105,7 @@ const POSES = [
     avoid: ["Locking the standing knee.", "Putting heavy weight on the bottom hand."],
     easier: "Use a block under the hand. Practise with your back against a wall.",
     benefits: "Builds balance, ankle strength and core control.",
-    skip: "With an ankle injury or low blood pressure. With neck pain, look down at the floor.",
+    skip: "With an ankle injury or low blood pressure. With a knee or hip problem, use a block and keep your back against a wall. With neck pain, look down at the floor.",
   },
   {
     id: "garudasana", sk: "Garudasana", en: "Eagle Pose", cat: "balance", lvl: 2, sided: true,
@@ -129,7 +129,7 @@ const POSES = [
     avoid: ["Knees pointing in a different direction from the toes.", "Rounding the back heavily to get lower."],
     easier: "Sit on a block or rolled blanket. Put a folded blanket under the heels.",
     benefits: "Opens the hips. Strengthens the ankles. Helps digestion.",
-    skip: "With knee injuries.",
+    skip: "With knee or ankle injuries. With a lower back problem, sit on a block. Keep the spine long.",
   },
   {
     id: "ardha-kati-chakrasana", sk: "Ardha Kati Chakrasana", en: "Standing Side Bend", cat: "standing", lvl: 1, sided: true,
@@ -161,7 +161,7 @@ const POSES = [
     avoid: ["Forcing the hips to the heels. Put a cushion between them."],
     easier: "Rest the forehead on a cushion or stacked fists.",
     benefits: "Rests the back. Calms the mind. Use it any time you need a break.",
-    skip: "With knee injuries or late pregnancy, widen the knees or skip it.",
+    skip: "With knee injuries or late pregnancy, widen the knees or skip it. With vertigo or a severe back injury, rest the forehead on stacked fists. Come up slowly.",
   },
   {
     id: "adho-mukha", sk: "Adho Mukha Svanasana", en: "Downward Dog", cat: "inversion", lvl: 1,
@@ -185,7 +185,7 @@ const POSES = [
     avoid: ["Pushing up with the arms into a deep bend. Lift with the back.", "Cranking the neck back."],
     easier: "Stay low in Baby Cobra. Rest on the forearms like a sphinx.",
     benefits: "Strengthens the back. Opens the chest.",
-    skip: "With a recent back or abdominal surgery or in pregnancy.",
+    skip: "With a recent back or abdominal surgery or in pregnancy. With a back injury, stay low in Baby Cobra or use Sphinx. With wrist pain, use Sphinx.",
   },
   {
     id: "shalabhasana", sk: "Shalabhasana", en: "Locust Pose", cat: "backbend", lvl: 1,
@@ -193,7 +193,7 @@ const POSES = [
     avoid: ["Jamming the lower back. Lengthen first, then lift.", "Looking up and squeezing the neck."],
     easier: "Lift only the legs. Or only the chest.",
     benefits: "Strengthens the whole back body. Helps posture.",
-    skip: "In pregnancy, after abdominal surgery or with a hernia. With a recent back injury, lift only the legs or only the chest.",
+    skip: "In pregnancy, after abdominal surgery or with a hernia. With a recent back injury, lift only the legs or only the chest. With heart disease or high blood pressure, lift one part at a time for a few breaths. Never hold the breath.",
   },
   {
     id: "dhanurasana", sk: "Dhanurasana", en: "Bow Pose", cat: "backbend", lvl: 2,
@@ -361,7 +361,7 @@ const POSES = [
     avoid: ["Turning the head while in the pose.", "Forcing the feet to the floor. Rest them on a chair."],
     easier: "Rest the feet on a chair or the wall.",
     benefits: "Stretches the back and shoulders.",
-    skip: "With any neck problem, high blood pressure, glaucoma, pregnancy or during your period. Learn with a teacher first.",
+    skip: "With any neck or back problem, high blood pressure, glaucoma, pregnancy or during your period. Learn with a teacher first.",
   },
   {
     id: "sarvangasana", sk: "Sarvangasana", en: "Shoulder Stand", cat: "inversion", lvl: 3,
@@ -369,7 +369,7 @@ const POSES = [
     avoid: ["Practising without blankets under the shoulders.", "Turning the head or talking while in the pose.", "Pressing the chin hard into the chest. Keep a small space at the throat."],
     easier: "Do Legs Up the Wall instead.",
     benefits: "A calming inversion for experienced practitioners.",
-    skip: "With any neck problem, high blood pressure, glaucoma, pregnancy or during your period. Learn with a teacher first.",
+    skip: "With any neck or back problem, high blood pressure, glaucoma, pregnancy or during your period. Learn with a teacher first.",
   },
   {
     id: "savasana", sk: "Savasana", en: "Corpse Pose", cat: "restore", lvl: 1,
@@ -451,7 +451,7 @@ const POSES = [
     avoid: ["Pulling the leg up with the arm. Kick the foot into the hand.", "Letting the lifted knee swing out to the side.", "Locking the standing knee."],
     easier: "Hold a wall with the free hand. Loop a strap around the foot.",
     benefits: "Builds balance and focus. Stretches the thighs, hip flexors and shoulders.",
-    skip: "With vertigo or a hernia. With high blood pressure or a back injury, hold a wall and keep the lift small.",
+    skip: "With vertigo, a hernia or chest pain. With high blood pressure or a back injury, hold a wall and keep the lift small.",
   },
   {
     id: "utthita-hasta-padangusthasana", sk: "Utthita Hasta Padangusthasana", en: "Standing Hand to Big Toe", cat: "balance", lvl: 2, sided: true,
@@ -547,7 +547,7 @@ const POSES = [
     avoid: ["Knees and elbows splaying wide.", "Pushing through pain in the lower back or wrists.", "Turning the head while in the pose."],
     easier: "Stay in Bridge. Practise Camel to build the back bend.",
     benefits: "Opens the chest, shoulders and hip flexors. Strengthens the arms and legs.",
-    skip: "With any back, neck, wrist or shoulder injury, high or low blood pressure, glaucoma, heart problems or pregnancy. Warm up fully first. Learn it with a teacher.",
+    skip: "With any back, neck, wrist or shoulder injury, high or low blood pressure, glaucoma, heart problems, pregnancy or during your period. Warm up fully first. Learn it with a teacher.",
   },
   {
     id: "parighasana", sk: "Parighasana", en: "Gate Pose", cat: "seated", lvl: 1, sided: true,
@@ -555,7 +555,7 @@ const POSES = [
     avoid: ["Leaning forward. Keep the chest open to the side.", "Collapsing into the lower side. Lengthen first, then bend."],
     easier: "Sit on a chair with one leg out to the side.",
     benefits: "Stretches the side body and the inner thigh. Frees the breath.",
-    skip: "With a knee injury, sit on a chair instead. After abdominal surgery or with a hernia, skip it.",
+    skip: "With a knee injury, sit on a chair instead. With neck pain, look down. After abdominal surgery or with a hernia, skip it.",
   },
   {
     id: "bharadvajasana", sk: "Bharadvajasana", en: "Simple Seated Twist", cat: "twist", lvl: 1, sided: true,
@@ -588,12 +588,12 @@ const SURYA = [
   ["Pranamasana", "Prayer pose", "Stand tall. Palms together at the chest. Exhale."],
   ["Hasta Uttanasana", "Raised arms", "Inhale. Raise the arms. Lift the chest gently."],
   ["Padahastasana", "Forward fold", "Exhale. Fold forward. Bend the knees as needed."],
-  ["Ashwa Sanchalanasana", "Low lunge", "Inhale. Step the right leg back. Knee down. Lift the chest."],
+  ["Ashwa Sanchalanasana", "Low lunge", "Inhale. Reach the right foot back. Lower that knee. Keep the left knee over the ankle. Lift the chest."],
   ["Phalakasana", "Plank", "Exhale. Step the left leg back into plank. Keep breathing."],
   ["Ashtanga Namaskara", "Knees, chest, chin", "Inhale. Then exhale and lower the knees, chest and chin to the floor."],
   ["Bhujangasana", "Cobra", "Inhale. Slide forward. Lift the chest into cobra."],
   ["Parvatasana", "Downward dog", "Exhale. Lift the hips into downward dog."],
-  ["Ashwa Sanchalanasana", "Low lunge", "Inhale. Step the right foot forward between the hands."],
+  ["Ashwa Sanchalanasana", "Low lunge", "Inhale. Step the right foot forward between the hands. Keep the right knee over the ankle."],
   ["Padahastasana", "Forward fold", "Exhale. Step the left foot forward. Fold."],
   ["Hasta Uttanasana", "Raised arms", "Inhale. Rise up with a long spine. Arms up."],
   ["Pranamasana", "Prayer pose", "Exhale. Palms together at the chest."],
@@ -608,6 +608,12 @@ const OPEN_STEP = {
 const CLOSE_STEP = {
   t: "Closing",
   say: "Roll to your right side. Come up slowly to a comfortable seat. Bring the palms together at the chest. If you like, chant with me. Lokah samastah sukhino bhavantu. Om shanti shanti shanti. May all beings be happy and free. Thank yourself for practising today.",
+  s: 45,
+};
+// The seated sessions end sitting up, so there is nothing to roll out of.
+const SEATED_CLOSE_STEP = {
+  t: "Closing",
+  say: "Stay sitting tall. Bring the palms together at the chest. If you like, chant with me. Lokah samastah sukhino bhavantu. Om shanti shanti shanti. May all beings be happy and free. Open the eyes slowly. Thank yourself for practising today.",
   s: 45,
 };
 
@@ -634,7 +640,7 @@ const SESSIONS = [
       "Centring", { p: "sukhasana", b: 8 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "vyaghrasana", b: 4 }, { p: "shashankasana", b: 5 },
       "Sun salutation", { sun: 3 },
-      "Poses", { p: "tadasana", b: 4 }, { p: "vrikshasana", b: 5 }, { p: "utkatasana", b: 5 }, { p: "uttanasana", b: 5 }, { p: "bhujangasana", b: 4 }, { p: "setu-bandha", b: 5 }, { p: "jathara-parivartanasana", b: 5 },
+      "Poses", { p: "tadasana", b: 4 }, { p: "vrikshasana", b: 5 }, { p: "utkatasana", b: 5 }, { p: "uttanasana", b: 5 }, { p: "bhujangasana", b: 4 }, { p: "setu-bandha", b: 5 }, { p: "pawanmuktasana", b: 4 }, { p: "jathara-parivartanasana", b: 5 },
       "Breathing", { t: "Yogic breathing", say: "Sit comfortably. Breathe in through the nose, filling the belly, then the ribs, then the chest. Breathe out slowly in the reverse order.", s: 90 },
       "Meditation", MED.breath,
       "Relaxation", { p: "savasana", b: 25 },
@@ -649,7 +655,7 @@ const SESSIONS = [
       "Centring", { p: "sukhasana", b: 8 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "ardha-kati-chakrasana", b: 4 }, { p: "malasana", b: 6 },
       "Sun salutation", { sun: 5 },
-      "Poses", { p: "trikonasana", b: 8 }, { p: "parsvakonasana", b: 8 }, { p: "prasarita", b: 8 }, { p: "gomukhasana", b: 6 }, { p: "janu-sirsasana", b: 8 }, { p: "baddha-konasana", b: 10 }, { p: "paschimottanasana", b: 10 }, { p: "supta-padangusthasana", b: 8 }, { p: "ananda-balasana", b: 8 },
+      "Poses", { p: "trikonasana", b: 8 }, { p: "parsvakonasana", b: 8 }, { p: "prasarita", b: 8 }, { p: "gomukhasana", b: 6 }, { p: "janu-sirsasana", b: 8 }, { p: "baddha-konasana", b: 10 }, { p: "paschimottanasana", b: 10 }, { p: "setu-bandha", b: 5 }, { p: "supta-padangusthasana", b: 8 }, { p: "ananda-balasana", b: 8 },
       "Breathing", { t: "Alternate nostril breathing", say: "Sit tall. Close the right nostril with the thumb. Breathe in through the left. Close the left. Breathe out through the right. Breathe in through the right. Switch and breathe out through the left. Keep going at an easy pace.", s: 180 },
       "Meditation", MED.still,
       "Relaxation", { p: "savasana", b: 40 },
@@ -679,7 +685,7 @@ const SESSIONS = [
       "Centring", { p: "sukhasana", b: 6 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "vyaghrasana", b: 5 }, { p: "malasana", b: 5 },
       "Sun salutation", { sun: 8 },
-      "Poses", { p: "utkatasana", b: 8 }, { p: "virabhadrasana2", b: 8 }, { p: "viparita-virabhadrasana", b: 5 }, { p: "ardha-chandrasana", b: 5 }, { p: "garudasana", b: 5 }, { p: "upavistha-konasana", b: 8 }, { p: "ardha-matsyendrasana", b: 6 },
+      "Poses", { p: "utkatasana", b: 8 }, { p: "virabhadrasana2", b: 8 }, { p: "viparita-virabhadrasana", b: 5 }, { p: "ardha-chandrasana", b: 5 }, { p: "garudasana", b: 5 }, { p: "upavistha-konasana", b: 8 }, { p: "ardha-matsyendrasana", b: 6 }, { p: "pawanmuktasana", b: 5 },
       "Breathing", { t: "Alternate nostril breathing", say: "Sit tall. Breathe in through the left nostril. Breathe out through the right. Breathe in through the right. Breathe out through the left. Let the out breath be longer than the in breath.", s: 150 },
       "Meditation", MED.breath,
       "Relaxation", { p: "savasana", b: 40 },
@@ -715,7 +721,7 @@ const SESSIONS = [
     id: "nidra", name: "Yoga Nidra", lvl: 1, focus: "Deep relaxation", color: "#64D2FF",
     about: "A guided body scan lying down. Turn the voice on. Many people fall asleep, which is fine.",
     steps: [
-      "Preparation", { t: "Settle", say: "Lie on your back in corpse pose, or on your left side if you are pregnant. Cover yourself with a blanket. Close your eyes. Decide not to move for the rest of the practice.", s: 60 },
+      "Preparation", { t: "Settle", say: "Lie on your back in corpse pose, or on your left side if you are pregnant. Cover yourself with a blanket. Close your eyes. Decide not to move for the rest of the practice. Say silently: I am practising yoga nidra. I will stay aware.", s: 60 },
       { t: "Sounds", say: "Listen to the sounds far away. Then the sounds nearby. Then the sound of your own breath.", s: 60 },
       "Intention", { t: "Resolve", say: "Choose a short positive sentence about your life, in your own words. Repeat it silently three times.", s: 45 },
       "Body scan", { t: "Right side", say: "Bring your awareness to the right hand thumb. Each finger. The palm. The wrist. Elbow. Shoulder. Right side of the waist. Hip. Knee. Ankle. Each toe of the right foot.", s: 75 },
@@ -755,16 +761,16 @@ const BREATHS = [
   {
     id: "nadi", name: "Alternate Nostril", sk: "Nadi Shodhana", lvl: 1, rounds: 6,
     pattern: [["In through left", 4], ["Out through right", 8], ["In through right", 4], ["Out through left", 8]],
-    about: "Balancing breath with the out breath twice as long as the in breath. Brings calm focus. Add a short hold only after a few weeks.",
+    about: "Balancing breath with the out breath twice as long as the in breath. Brings calm focus. Add a short hold only after a few months of steady practice.",
     how: ["Sit tall. Rest the left hand on the knee.", "Use the right thumb to close the right nostril. Use the ring finger to close the left.", "Follow the pacer. The out breath is twice as long as the in breath.", "Keep the face and shoulders soft."],
-    caution: "Never strain. Practise when the nose is clear. If you later add holds, skip them in pregnancy or with high blood pressure.",
+    caution: "Never strain. Skip it with a cold, flu, fever, a blocked nose or during a migraine. Go gently during your period. If you later add holds, skip them in pregnancy, with heart disease or with high blood pressure.",
   },
   {
     id: "bhramari", name: "Bee Breath", sk: "Bhramari", lvl: 1, rounds: 7,
     pattern: [["Breathe in", 4], ["Hum out", 8]],
     about: "A soft hum on the out breath. Quiets a busy mind.",
     how: ["Sit tall. Close the eyes.", "Rest the index fingers on the small flaps in front of the ears.", "Breathe in through the nose.", "Hum softly as you breathe out with the mouth closed."],
-    caution: "Avoid with an ear infection. Do not press the ears hard.",
+    caution: "Avoid with an ear infection or chest pain. With epilepsy or high blood pressure, keep the hum soft and the rounds few. Do not press the ears hard.",
   },
   {
     id: "sheetali", name: "Cooling Breath", sk: "Sheetali", lvl: 1, rounds: 8,
@@ -778,7 +784,7 @@ const BREATHS = [
     pattern: [["Short sharp out breaths", 30], ["Rest with easy breathing", 30]],
     about: "Quick active out breaths from the belly. Energising. Do it on an empty stomach.",
     how: ["Sit tall.", "Snap the belly in to push air out of the nose.", "Let the in breath happen on its own.", "Start at about one out breath per second."],
-    caution: "Avoid in pregnancy, during your period, with high blood pressure, heart disease, hernia, epilepsy or after recent surgery. Stop if dizzy.",
+    caution: "Avoid in pregnancy or during your period. Avoid with high or low blood pressure, heart disease, a past stroke, vertigo, epilepsy, a hernia, a stomach ulcer or severe back pain. Skip it after recent surgery. Stop if you feel dizzy.",
   },
 ];
 
@@ -829,7 +835,7 @@ const ARTICLES = [
       "* Two thick books can stand in for yoga blocks.",
       "* A wall nearby for balance poses.",
       "Wear clothes you can move in. Practise barefoot.",
-      "Wait two to three hours after a full meal. One hour after a light snack. Drink water after practice rather than during it.",
+      "Wait two to three hours after a full meal. One hour after a light snack. Sip water if you feel thirsty. Drink more after practice.",
     ],
   },
   {
@@ -844,12 +850,16 @@ const ARTICLES = [
   {
     id: "class", title: "The shape of a practice", icon: "🧭", sub: "Why sessions run in this order",
     body: [
+      "* Opening: sit quietly. Notice the body. Set an intention.",
       "* Centring: sit and breathe to arrive.",
       "* Warm-up: gentle spine movements to prepare the joints.",
       "* Sun salutation: builds heat and links breath with movement.",
       "* Poses: standing work first, then floor work.",
+      "* Cooling down: easy floor poses such as Knees to Chest or Supine Twist.",
       "* Breathing: a few minutes of pranayama once the body is calm.",
+      "* Meditation: a few quiet minutes once the breath has slowed.",
       "* Relaxation: at least five minutes in Corpse Pose.",
+      "* Closing: a short chant or a few quiet breaths.",
       "Build your own practice in the same order and it will feel balanced.",
     ],
   },
@@ -1114,7 +1124,7 @@ const MORE_POSES = [
     avoid: ["Arching the lower back off the floor. Raise the legs higher.", "Holding the breath."],
     easier: "Lift one leg at a time. Keep the other foot on the floor with the knee bent.",
     benefits: "Strengthens the belly and hip flexors.",
-    skip: "In pregnancy, after abdominal surgery or with a hernia. With a lower back injury, lift one leg at a time. Go gently during the first days of your period.",
+    skip: "With high blood pressure, skip it. In pregnancy, after abdominal surgery or with a hernia. With a lower back injury, lift one leg at a time. Go gently during the first days of your period.",
   },
   {
     id: "makara-adho-mukha", sk: "Makara Adho Mukha Svanasana", en: "Forearm Plank", cat: "core", lvl: 1,
@@ -1207,7 +1217,7 @@ const MORE_BREATHS = [
     pattern: [["Breathe in. Raise the clasped hands", 3], ["Breathe out with a ha. Swing down halfway", 2]],
     about: "A standing warming practice. Strong out breaths with a swinging movement. Wakes the body on cold mornings.",
     how: ["Stand with the feet wider than the hips. Soften the knees.", "Clasp the hands. Raise the arms overhead.", "Breathe out with a strong ha as you swing the arms down. Bend forward only halfway.", "Breathe in as you lift the arms back up.", "After the last round, stand still with the eyes closed for a few breaths."],
-    caution: "Avoid with high blood pressure, heart disease, glaucoma, a hernia, a back injury, epilepsy, vertigo or migraine. Skip it in pregnancy and after recent surgery. With asthma or another lung condition, check with your doctor first. Stop if you feel dizzy.",
+    caution: "Avoid with high blood pressure, heart disease, a past stroke, glaucoma, a hernia, a stomach ulcer, a back injury, epilepsy, vertigo or migraine. Avoid it with asthma, bronchitis or any other lung condition. Skip it in pregnancy and after recent surgery. Stop if you feel dizzy.",
   },
   {
     id: "om-chant", name: "Om Chanting", sk: "Omkara", lvl: 1, rounds: 7,
@@ -1404,7 +1414,7 @@ const MORE_ARTICLES = [
       "Lokah samastah",
       "* Chant: Lokah samastah sukhino bhavantu.",
       "* Meaning: may all beings everywhere be happy and free.",
-      "* Use: a closing wish for the whole world. Every Sthira session ends with it.",
+      "* Use: a closing wish for the whole world. Most Sthira sessions end with it.",
       "Asato ma",
       "* Chant: Asato ma sadgamaya. Tamaso ma jyotirgamaya. Mrityor ma amritam gamaya. Om shanti shanti shanti.",
       "* Meaning: lead me from the unreal to the real. Lead me from darkness to light. Lead me from death to the deathless. Om, peace, peace, peace.",
@@ -1543,7 +1553,7 @@ const MORE_SESSIONS = [
       { t: "Silent mantra", say: "Now repeat Om silently with each out breath. If it fades, let it go and simply listen.", s: 120 },
       "Open awareness", { t: "Mindful sitting", say: "Let go of any technique. Notice whatever arises. Sounds. Sensations. Thoughts. Let each one come and go without following it. If you get lost in a thought, notice it. Come back to the breath.", s: 180 },
       "Return", { t: "Gratitude", say: "Bring to mind one person or one thing you are grateful for today. Let that feeling fill the chest for a few breaths.", s: 60 },
-      "Closing", CLOSE_STEP,
+      "Closing", SEATED_CLOSE_STEP,
     ],
   },
   {
