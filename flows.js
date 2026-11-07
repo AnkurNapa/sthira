@@ -62,11 +62,7 @@ function generatorPanel() {
     levelChips,
     cap < 3 && el("p", { class: "note" }, `Your plan caps the level at ${LEVELS[cap]} for now.`),
     sectionTitle("APM balance"),
-    el("div", { class: "segmented", role: "group", "aria-label": "APM balance" }, Object.entries(APM).map(([k, a]) =>
-      el("button", { type: "button", "aria-pressed": String(k === genState.apm), onclick: (e) => {
-        genState = { ...genState, apm: k, seed: "" };
-        e.currentTarget.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget)));
-      } }, a.name))),
+    chipRow("APM balance", Object.entries(APM).map(([k, a]) => [k, a.name]), genState.apm, (v) => { genState = { ...genState, apm: v, seed: "" }; }),
     el("p", { class: "apm-note" }, "Every flow runs asana, then pranayama, then meditation. Choose how the time is shared."),
     sectionTitle("Focus"),
     chipRow("Focus", Object.entries(FOCUS).map(([k, f]) => [k, f.name]), genState.focus, (v) => { genState = { ...genState, focus: v, seed: "" }; }),

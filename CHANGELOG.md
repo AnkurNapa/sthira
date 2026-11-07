@@ -2,6 +2,14 @@
 
 All notable changes to Sthira. Versions follow docs/RELEASE.md.
 
+## 0.3.1 (7 November 2026)
+
+### Added
+- A share card for links on WhatsApp, LinkedIn, X and iMessage.
+
+### Changed
+- Final touches to the APM screens. The offline cache moves to version 4.
+
 ## 0.3.0 (7 November 2026)
 
 ### Added
