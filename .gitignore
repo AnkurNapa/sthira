@@ -1,0 +1,7 @@
+.shots/
+.walk/
+.figures-check/
+.playwright-mcp/
+.DS_Store
+*.wav
+figures.js

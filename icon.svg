@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Sthira">
+  <rect width="512" height="512" rx="112" fill="#E8743B"/>
+  <g fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M256 352 Q196 262 256 146 Q316 262 256 352"/>
+    <path d="M256 352 Q156 330 126 226 Q218 236 256 352"/>
+    <path d="M256 352 Q356 330 386 226 Q294 236 256 352"/>
+    <path d="M150 386 Q256 420 362 386"/>
+  </g>
+</svg>

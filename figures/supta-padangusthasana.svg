@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" data-pose="supta-padangusthasana" data-style="silhouette" role="img" aria-label="Reclining Big Toe Pose (Supta Pādāṅguṣṭhāsana)">
+  <defs>
+    <marker id="asanakit-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse" markerUnits="strokeWidth">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#c1121f"/>
+    </marker>
+  </defs>
+  <rect data-layer="background" x="0" y="0" width="400" height="400" fill="#ffffff"/>
+  <g data-layer="props">
+    <rect data-prop="mat" x="29.277" y="251.766" width="341.446" height="10.735" rx="5.367" fill="#f0f0f0" stroke="#111111" stroke-width="1.952"/>
+  </g>
+  <g data-layer="figure">
+    <line data-bone="footL" data-side="left" x1="93.174" y1="251.766" x2="91.302" y2="229.892" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="shinL" data-side="left" x1="151.642" y1="251.766" x2="93.174" y2="251.766" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="handL" data-side="left" x1="199.62" y1="247.931" x2="186.544" y2="249.101" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="thighL" data-side="left" x1="210.11" y1="251.766" x2="151.642" y2="251.766" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="forearmL" data-side="left" x1="233.697" y1="241.788" x2="199.62" y2="247.931" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="upperArmL" data-side="left" x1="272.858" y1="237.58" x2="233.697" y2="241.788" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="hipL" data-side="left" x1="205.798" y1="251.766" x2="210.11" y2="251.766" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="clavicleL" data-side="left" x1="267.785" y1="237.58" x2="272.858" y2="237.58" stroke="#4d4d4d" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <line data-bone="pelvis" data-side="center" x1="205.798" y1="251.766" x2="229.662" y2="251.766" stroke="#111111" stroke-width="15.127" stroke-linecap="round" opacity="0.45"/>
+    <path data-part="torso" d="M267.785,237.58C266.095,237.58,265.312,237.283,262.713,237.58C253.563,238.626,201.374,250.784,201.486,251.766C201.516,252.023,204.361,251.766,205.798,251.766C207.235,251.766,207.854,252.018,210.11,251.766C218.821,250.793,272.974,238.617,272.858,237.58C272.825,237.289,269.476,237.58,267.785,237.58" fill="#111111" stroke="#111111" stroke-width="18.298" stroke-linejoin="round"/>
+    <line data-bone="spine" data-side="center" x1="229.662" y1="251.766" x2="267.785" y2="237.58" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="hipR" data-side="right" x1="205.798" y1="251.766" x2="201.486" y2="251.766" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="neck" data-side="center" x1="267.785" y1="237.58" x2="282.104" y2="237.58" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="head" data-side="center" x1="282.104" y1="237.58" x2="313.01" y2="240.345" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <ellipse data-part="head" cx="297.557" cy="238.962" rx="12.199" ry="16.102" transform="rotate(95.111 297.557 238.962)" fill="#111111" stroke="#111111" stroke-width="2.44"/>
+    <line data-bone="thighR" data-side="right" x1="201.486" y1="251.766" x2="230.72" y2="200" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="clavicleR" data-side="right" x1="267.785" y1="237.58" x2="262.713" y2="237.58" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="shinR" data-side="right" x1="230.72" y1="200" x2="259.954" y2="148.234" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="footR" data-side="right" x1="259.954" y1="148.234" x2="281.351" y2="150.148" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="upperArmR" data-side="right" x1="262.713" y1="237.58" x2="270.9" y2="198.204" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="forearmR" data-side="right" x1="270.9" y1="198.204" x2="278.094" y2="163.601" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+    <line data-bone="handR" data-side="right" x1="278.094" y1="163.601" x2="280.823" y2="150.475" stroke="#111111" stroke-width="15.127" stroke-linecap="round"/>
+  </g>
+</svg>
