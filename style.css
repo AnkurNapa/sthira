@@ -2840,8 +2840,7 @@ button.toast { cursor: pointer; }
 .apm-progress .progress-fill { width: 100%; transition: clip-path 0.25s linear; }
 .balance-line { margin: 1rem 0 0; color: var(--text-2); }
 .apm-note { margin: 0.5rem 0 0; color: var(--text-2); font-size: 0.9375rem; }
-.create-panel .segmented { display: flex; flex-wrap: wrap; border-radius: 1.375rem; }
-.create-panel .segmented button { flex: 1 1 auto; }
+
 .flow-preview .apm-bar { max-width: 20rem; margin: 0 0 1rem; }
 .seg-a { fill: var(--apm-a); }
 .seg-p { fill: var(--apm-p); }

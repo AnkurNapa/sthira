@@ -1,5 +1,5 @@
 // Sthira offline cache. Bump CACHE_VERSION whenever any site file changes.
-const CACHE_VERSION = "sthira-v3";
+const CACHE_VERSION = "sthira-v4";
 const SITE_FILES = [
   "./", "index.html", "style.css", "data.js", "plan.js", "generator.js", "core.js", "stats.js", "ui.js", "media.js", "pose-photos.js", "views.js",
   "voice/clips.js", "voice.js", "player.js", "today.js", "planview.js", "flows.js", "welcome.js", "progress.js", "nav.js", "app.js", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-512.png",
