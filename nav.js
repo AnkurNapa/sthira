@@ -220,7 +220,8 @@ function paintSubnav() {
   if (!slot) return;
   slot.replaceChildren(readPlan() ? el("a", { class: "pill small", href: "#/plan" }, "My Plan") : el("a", { class: "pill small", href: "#/quiz" }, "Take the quiz"));
   const page = PAGES.find((p) => p.id === renderedPage);
-  document.getElementById("subnav-title").textContent = page && !["today", "welcome"].includes(page.id) ? page.label : "Sthira";
+  // The wordmark already shows the brand above, so the sub nav always names the page.
+  document.getElementById("subnav-title").textContent = page ? page.label : "Today";
 }
 
 function watchSubnav(topnav, subnav) {
@@ -239,7 +240,7 @@ function buildNav() {
       el("nav", { class: "topnav-links", "aria-label": "Pages" }, NAV_PAGES.map(navItem)),
       menuBtn));
   const subnav = el("div", { class: "subnav" },
-    el("div", { class: "subnav-inner" }, el("p", { class: "subnav-title", id: "subnav-title" }, "Sthira"), el("div", { id: "subnav-action" })));
+    el("div", { class: "subnav-inner" }, el("p", { class: "subnav-title", id: "subnav-title" }, "Today"), el("div", { id: "subnav-action" })));
   document.body.prepend(topnav, subnav, el("div", { class: "nav-dim", "aria-hidden": "true" }));
   bindFlyoutClose(topnav);
   watchSubnav(topnav, subnav);

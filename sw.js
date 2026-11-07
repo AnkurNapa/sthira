@@ -1,8 +1,14 @@
 // Sthira offline cache. Bump CACHE_VERSION whenever any site file changes.
-const CACHE_VERSION = "sthira-v5";
+const CACHE_VERSION = "sthira-v6";
 const SITE_FILES = [
-  "./", "index.html", "style.css", "data.js", "plan.js", "generator.js", "core.js", "stats.js", "ui.js", "media.js", "pose-photos.js", "views.js",
-  "voice/clips.js", "voice.js", "player.js", "today.js", "planview.js", "flows.js", "welcome.js", "progress.js", "nav.js", "app.js", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-512.png",
+  "./", "index.html", "style.css", "data.js", "align.js", "plan.js", "generator.js", "core.js", "stats.js", "ui.js", "media.js", "pose-photos.js", "views.js",
+  "voice/clips.js", "voice.js", "music.js", "player.js", "today.js", "planview.js", "flows.js", "welcome.js", "progress.js", "nav.js", "app.js", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-512.png",
+  // Photos on Today and the welcome page, so the first screens look right offline.
+  "media/hero-sunrise-silhouette-poster.jpg", "media/practice-deck-by-sea-poster.jpg",
+  "media/photo-senior-lunge-with-block-800.webp", "media/photo-senior-lunge-with-block-1600.webp",
+  "media/photo-seated-breathing-wicker-chair-800.webp", "media/photo-seated-breathing-wicker-chair-1600.webp",
+  "media/photo-props-cork-blocks-600.webp", "media/photo-props-cork-blocks-1200.webp",
+  "photos/poses/virabhadrasana2-400.webp", "photos/poses/virabhadrasana2-800.webp",
 ];
 
 self.addEventListener("install", (event) => {

@@ -8,19 +8,29 @@ const FLOWS_KEY = "sthira.flows";
 const TODAY_FLOW_ID = "today-flow";
 const SCHEMA = 3;
 const LEVELS = { 1: "Beginner", 2: "Intermediate", 3: "Advanced" };
-const POSE_BY_ID = Object.fromEntries(POSES.map((p) => [p.id, p]));
-const BREATH_BY_ID = Object.fromEntries(BREATHS.map((b) => [b.id, b]));
-const SESSION_BY_ID = Object.fromEntries(SESSIONS.map((s) => [s.id, s]));
-const ARTICLE_BY_ID = Object.fromEntries(ARTICLES.map((a) => [a.id, a]));
+/** True only for a key the object holds itself, so "constructor" or "__proto__" never match. */
+const own = (obj, key) => obj != null && typeof key === "string" && Object.prototype.hasOwnProperty.call(obj, key);
+/** An id map with no prototype, so lookups like map["toString"] are undefined. */
+const byId = (list) => Object.assign(Object.create(null), Object.fromEntries(list.map((x) => [x.id, x])));
+const POSE_BY_ID = byId(POSES);
+const BREATH_BY_ID = byId(BREATHS);
+const SESSION_BY_ID = byId(SESSIONS);
+const ARTICLE_BY_ID = byId(ARTICLES);
+// Practice shorter than this leaves no history row and no minutes.
+const MIN_RECORD_SECS = 30;
+// A session counts as finished only when this share of its planned time was played.
+const COMPLETE_SHARE = 0.5;
 const SETUP_SECS = 5;
 const SUN_ROUND_SECS = 30;
-// Poses inside a sun salutation. If the plan avoids any of them the whole salutation is left out.
-const SUN_POSE_IDS = ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha"];
 // Phases where a timed step means moving the body. Rest only plans leave these out.
 const MOVE_PHASES = ["Warm-up", "Sun salutation", "Poses", "Seated", "Standing"];
+// Rest only plans keep only these gentle breathing practices.
+const REST_BREATHS = ["abdominal", "yogic"];
 const RESUME_MS = 12 * 60 * 60 * 1000;
 const HISTORY_MAX = 200;
-const DEFAULT_SETTINGS = { voice: true, rate: 0.9, chime: true, breathSecs: BREATH_SECS, weeklyGoal: 0, apmSplit: [70, 15, 15] };
+const DEFAULT_SETTINGS = { voice: true, rate: 0.9, chime: true, breathSecs: BREATH_SECS, weeklyGoal: 0, apmSplit: [70, 15, 15], music: "calm", musicTrack: "", musicVolume: 0.4 };
+// Music modes: off, calm (meditation and relaxation only) or all (the whole session).
+const MUSIC_MODES = ["off", "calm", "all"];
 
 /* APM: asana, pranayama and meditation. Rest (opening, relaxation, closing) counts in totals only. */
 const APM_KEYS = ["a", "p", "m", "r"];
@@ -86,7 +96,78 @@ function cleanSettings(raw) {
     breathSecs: clamp(Math.round(Number(s.breathSecs)) || BREATH_SECS, 5, 8),
     weeklyGoal: clamp(Math.round(Number(s.weeklyGoal)) || 0, 0, 1000),
     apmSplit: cleanSplit(s.apmSplit),
+    music: MUSIC_MODES.includes(s.music) ? s.music : DEFAULT_SETTINGS.music,
+    musicTrack: typeof s.musicTrack === "string" ? s.musicTrack.slice(0, 40) : "",
+    musicVolume: clamp(Number(s.musicVolume), 0, 1) || (Number(s.musicVolume) === 0 ? 0 : DEFAULT_SETTINGS.musicVolume),
   };
+}
+
+/* Alignment cues (align.js). Spoken through each hold after the entry instructions. */
+
+const CUE_START_SHARE = 0.4;
+const WORDS_PER_SEC = 2.5;
+const CUE_GAP_SECS = 1;
+const CUE_END_MARGIN = 0.5;
+
+/** Seconds a line takes to say at the chosen voice speed, a little on the long side. */
+function speechSecs(text, rate = DEFAULT_SETTINGS.rate) {
+  const words = String(text).split(/\s+/).filter(Boolean).length;
+  return words / (WORDS_PER_SEC * (rate / DEFAULT_SETTINGS.rate)) + 0.4;
+}
+
+/** The cues for a player step. Left side cues swap right and left like the step text. */
+function alignCues(step) {
+  if (typeof ALIGN === "undefined") return { cues: [], speak: false };
+  if (step.poseId && own(ALIGN, step.poseId)) {
+    const cues = ALIGN[step.poseId].map((c) => (step.side === "Left side" ? swapSides(c) : c));
+    return { cues, speak: true };
+  }
+  if (Number.isInteger(step.suryaIndex) && typeof SURYA_ALIGN !== "undefined" && Array.isArray(SURYA_ALIGN[step.suryaIndex])) {
+    // One breath is too short to speak these, so they are shown only.
+    return { cues: SURYA_ALIGN[step.suryaIndex], speak: false };
+  }
+  return { cues: [], speak: false };
+}
+
+/**
+ * When to say each cue: from 40 per cent into the hold (and after the entry instructions),
+ * spaced through the rest. A cue that would not finish before the step ends is left out.
+ */
+function cueSchedule(stepSecs, entryText, cues, rate) {
+  if (!cues.length) return [];
+  const start = Math.max(stepSecs * CUE_START_SHARE, speechSecs(entryText, rate) + CUE_GAP_SECS);
+  const gap = (stepSecs - start) / cues.length;
+  return cues.map((text, i) => ({ i, text, at: start + i * gap }))
+    .filter((c) => c.at + speechSecs(c.text, rate) <= stepSecs - CUE_END_MARGIN);
+}
+
+/** True when background music should play for this step. */
+function musicShouldPlay(mode, phase, cat) {
+  if (mode === "all") return true;
+  if (mode === "calm") return cat === "m" || phase === "Relaxation";
+  return false;
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** One history row in a safe shape, or null when it cannot be shown. */
+function cleanHistoryItem(h) {
+  if (!isObj(h) || typeof h.date !== "string" || !ISO_DATE.test(h.date) || isNaN(parseIso(h.date).getTime())) return null;
+  if (h.kind !== "session" && h.kind !== "breath") return null;
+  const title = typeof h.title === "string" && h.title.trim() ? h.title.trim().slice(0, 80) : null;
+  if (!title || typeof h.id !== "string") return null;
+  const cats = isObj(h.cats) ? Object.fromEntries(APM_KEYS.map((k) => [k, positive(h.cats[k])])) : undefined;
+  return { ts: positive(h.ts), date: h.date, kind: h.kind, id: h.id.slice(0, 80), title, min: positive(h.min), done: h.done === true, ...(cats ? { cats } : {}) };
+}
+
+/** Badge dates keyed by known badge ids only. */
+function cleanBadges(raw) {
+  const out = {};
+  if (!isObj(raw)) return out;
+  Object.entries(raw).forEach(([id, date]) => {
+    if (typeof date === "string" && ISO_DATE.test(date) && !isNaN(parseIso(date).getTime()) && /^[a-z0-9-]{1,40}$/.test(id)) out[id] = date;
+  });
+  return out;
 }
 
 /** One day of the log. Schema 2 stored s (session) and b (breath pacer): s becomes asana, b pranayama. */
@@ -124,8 +205,8 @@ function migrateStore(raw) {
     ...base,
     log: cleanLog(raw),
     sessions: Math.floor(positive(raw.sessions)),
-    history: Array.isArray(raw.history) ? raw.history.filter((h) => isObj(h) && typeof h.date === "string").slice(-HISTORY_MAX) : [],
-    badges: isObj(raw.badges) ? raw.badges : {},
+    history: Array.isArray(raw.history) ? raw.history.map(cleanHistoryItem).filter(Boolean).slice(-HISTORY_MAX) : [],
+    badges: cleanBadges(raw.badges),
     favPoses: strings(raw.favPoses),
     favSessions: strings(raw.favSessions),
     breathsTried: strings(raw.breathsTried),
@@ -252,31 +333,62 @@ function addPoseSecs(current, extra) {
  * Save a session. dateKey is the day it started, so a session past midnight counts on its start date.
  * poses maps pose ids to the seconds spent in them.
  */
-function recordSession({ session, minutes, completed, dateKey, poses, cats }) {
+/** True when enough of a session was played for it to count as finished. */
+function countsAsComplete(playedSecs, plannedSecs) {
+  return plannedSecs > 0 && playedSecs >= plannedSecs * COMPLETE_SHARE;
+}
+
+/** Add minutes to the day log only. Used to save progress when the page is hidden mid practice. */
+function addMinutes(dateKey, cats) {
   const store = readStore();
-  if (!(minutes > 0) && !completed) return store;
+  return writeStore({ log: addToLog(store, dateKey, cats) });
+}
+
+function subtractCats(cats, logged) {
+  return Object.fromEntries(APM_KEYS.map((k) => [k, Math.max(0, (cats[k] || 0) - ((logged && logged[k]) || 0))]));
+}
+
+function recordSession({ session, minutes, completed, dateKey, poses, cats, logged }) {
+  const store = readStore();
+  if (!(minutes * 60 >= MIN_RECORD_SECS)) return store;
   const date = dateKey || isoDate(new Date());
   const split = catsOrAsana(cats, minutes);
   const rounded = Object.fromEntries(APM_KEYS.map((k) => [k, round1(split[k])]));
   return writeStore({
     poseSecs: addPoseSecs(store.poseSecs, poses),
-    log: addToLog(store, date, split),
+    log: addToLog(store, date, subtractCats(split, logged)),
     sessions: store.sessions + (completed ? 1 : 0),
     history: pushHistory(store, { date, kind: "session", id: session.id, title: session.name, min: round1(minutes), done: Boolean(completed), cats: rounded }),
     resume: completed ? null : store.resume,
   });
 }
 
-function recordBreath({ breath, minutes, dateKey }) {
+/**
+ * Save a breathing practice. done means at least one full round was breathed.
+ * Under 30 seconds nothing is saved. Only a done practice counts towards Every breath.
+ */
+function recordBreath({ breath, minutes, dateKey, done, logged }) {
   const store = readStore();
-  if (!(minutes > 0)) return store;
+  if (!(minutes * 60 >= MIN_RECORD_SECS)) return store;
   const date = dateKey || isoDate(new Date());
-  const tried = store.breathsTried.includes(breath.id) ? store.breathsTried : [...store.breathsTried, breath.id];
+  const tried = done && !store.breathsTried.includes(breath.id) ? [...store.breathsTried, breath.id] : store.breathsTried;
   return writeStore({
-    log: addToLog(store, date, { p: minutes }),
+    log: addToLog(store, date, { p: Math.max(0, minutes - (logged || 0)) }),
     breathsTried: tried,
-    history: pushHistory(store, { date, kind: "breath", id: breath.id, title: breath.name, min: round1(minutes), done: true }),
+    history: pushHistory(store, { date, kind: "breath", id: breath.id, title: breath.name, min: round1(minutes), done: Boolean(done) }),
   });
+}
+
+/** True when the plan allows this breathing practice. The pacer and every Start button check it. */
+function breathAllowed(breathId, ctx = planContext()) {
+  return own(BREATH_BY_ID, breathId) && !ctx.avoidBreaths.has(breathId);
+}
+
+/** A safe breathing practice to offer instead: the first plan breath that is allowed, else Belly Breathing. */
+function safeBreathFor(ctx = planContext()) {
+  const plan = readPlan();
+  const pool = [...(plan ? plan.breaths : []), "abdominal", "yogic"];
+  return BREATH_BY_ID[pool.find((id) => breathAllowed(id, ctx))] || BREATH_BY_ID.abdominal;
 }
 
 /* Favourites and resume */
@@ -311,7 +423,7 @@ function clearResume() {
 let memPlan;
 
 function knownIds(list, map) {
-  return strings(list).filter((id) => map[id]);
+  return strings(list).filter((id) => own(map, id));
 }
 
 function cleanStage(st) {
@@ -329,34 +441,61 @@ function cleanStage(st) {
   };
 }
 
-/** Accept a plan from any quiz version. Unknown ids are dropped. A broken plan returns null. */
-function cleanPlan(raw) {
-  if (!isObj(raw) || !isObj(raw.dosha) || !DOSHAS[raw.dosha.primary] || !isObj(raw.health) || !Array.isArray(raw.journey)) return null;
+/** Quiz answers in a safe shape: strings for single answers, a list of known ids for conditions. */
+function cleanAnswers(raw) {
+  const out = {};
+  if (!isObj(raw)) return out;
+  QUIZ.forEach((q) => {
+    if (!own(raw, q.id)) return;
+    if (q.multi) out[q.id] = strings(raw[q.id]).filter((v) => q.options.some((o) => o.v === v));
+    else if (typeof raw[q.id] === "string" && q.options.some((o) => o.v === raw[q.id])) out[q.id] = raw[q.id];
+  });
+  return out;
+}
+
+function healthBlock(conditions) {
+  const h = healthFilter(conditions);
+  return { ids: h.ids, restOnly: h.restOnly, avoid: [...h.avoid], avoidBreaths: [...h.avoidBreaths], noHolds: h.noHolds, tips: h.tips };
+}
+
+function shapePlan(raw, health, answers, created) {
   const journey = raw.journey.filter(isObj).map(cleanStage);
   if (!journey.length) return null;
-  const healthIds = strings(raw.health.ids).filter((c) => CONDITIONS[c]);
+  const avoid = new Set(health.avoid);
+  const avoidBreaths = new Set(health.avoidBreaths);
   return {
     ...raw,
-    created: /^\d{4}-\d{2}-\d{2}$/.test(raw.created) ? raw.created : isoDate(new Date()),
-    answers: isObj(raw.answers) ? raw.answers : {},
+    created,
+    answers,
     dosha: {
       ...raw.dosha,
-      secondary: DOSHAS[raw.dosha.secondary] ? raw.dosha.secondary : null,
-      tertiary: DOSHAS[raw.dosha.secondary] && DOSHAS[raw.dosha.tertiary] ? raw.dosha.tertiary : null,
+      secondary: own(DOSHAS, raw.dosha.secondary) ? raw.dosha.secondary : null,
+      tertiary: own(DOSHAS, raw.dosha.secondary) && own(DOSHAS, raw.dosha.tertiary) ? raw.dosha.tertiary : null,
     },
     lvl: clamp(Math.round(Number(raw.lvl)) || 1, 1, 3),
-    poses: knownIds(raw.poses, POSE_BY_ID),
-    breaths: knownIds(raw.breaths, BREATH_BY_ID),
-    health: {
-      ids: healthIds,
-      restOnly: raw.health.restOnly === true,
-      avoid: strings(raw.health.avoid),
-      avoidBreaths: strings(raw.health.avoidBreaths),
-      noHolds: raw.health.noHolds === true,
-      tips: strings(raw.health.tips),
-    },
+    poses: knownIds(raw.poses, POSE_BY_ID).filter((id) => !avoid.has(id)),
+    breaths: knownIds(raw.breaths, BREATH_BY_ID).filter((id) => !avoidBreaths.has(id)),
+    health,
     journey,
   };
+}
+
+/**
+ * Accept a plan from any version. The health block is never trusted: it is rebuilt from the
+ * conditions with today's safety rules, so an old plan cannot keep an older, shorter avoid list.
+ * When the quiz answers are complete the whole plan is rebuilt. Unknown ids are dropped.
+ */
+function cleanPlan(raw) {
+  if (!isObj(raw) || !isObj(raw.dosha) || !own(DOSHAS, raw.dosha.primary) || !isObj(raw.health) || !Array.isArray(raw.journey)) return null;
+  const created = ISO_DATE.test(raw.created) ? raw.created : isoDate(new Date());
+  const answers = cleanAnswers(raw.answers);
+  const storedIds = strings(raw.health.ids).filter((c) => own(CONDITIONS, c));
+  const conditions = answers.conditions && answers.conditions.length ? answers.conditions : storedIds;
+  if (scoreDosha(answers).answered) {
+    const rebuilt = buildPlan({ ...answers, conditions });
+    return shapePlan(rebuilt, healthBlock(conditions), { ...answers, conditions }, created);
+  }
+  return shapePlan(raw, healthBlock(conditions), answers, created);
 }
 
 function readPlan() {
@@ -514,7 +653,7 @@ function poseSteps(phase, st, breathSecs) {
 
 function sunSteps(phase, rounds, breathSecs) {
   const guided = SURYA.map(([sk, en, cue], i) => ({
-    phase, title: en, subtitle: `${sk} · Round 1 · ${i + 1} of ${SURYA.length}`, text: cue, secs: breathSecs, poseId: null, art: `surya-${i}`, side: "",
+    phase, title: en, subtitle: `${sk} · Round 1 · ${i + 1} of ${SURYA.length}`, text: cue, secs: breathSecs, poseId: null, art: `surya-${i}`, suryaIndex: i, side: "",
   }));
   if (rounds < 2) return guided;
   return [...guided, {
@@ -536,8 +675,11 @@ function customStep(phase, st) {
 const usesAvoided = (st, ctx) => Array.isArray(st.uses) && st.uses.some((id) => ctx.avoid.has(id));
 
 function isLeftOut(phase, st, ctx) {
-  if (st.p) return !POSE_BY_ID[st.p] || ctx.avoid.has(st.p);
-  if (st.sun) return ctx.restOnly || SUN_POSE_IDS.some((id) => ctx.avoid.has(id));
+  // The sun salutation list lives in plan.js (SUN_STEP_POSES) so both files agree.
+  if (st.p) return !own(POSE_BY_ID, st.p) || ctx.avoid.has(st.p) || (ctx.restOnly && !SAFE_IN_REST.includes(st.p));
+  if (st.sun) return ctx.restOnly || SUN_STEP_POSES.some((id) => ctx.avoid.has(id));
+  if (st.breath && (ctx.restOnly ? !REST_BREATHS.includes(st.breath) : false)) return true;
+  if (st.breath && ctx.avoidBreaths && ctx.avoidBreaths.has(st.breath)) return true;
   return usesAvoided(st, ctx) || (ctx.restOnly && MOVE_PHASES.includes(phase));
 }
 
@@ -546,7 +688,7 @@ function blockingPoses(session, ctx = NO_FILTER) {
   return Array.isArray(session.requires) ? session.requires.filter((id) => ctx.avoid.has(id)) : [];
 }
 
-const NO_FILTER = { avoid: new Set(), restOnly: false, breathSecs: BREATH_SECS };
+const NO_FILTER = { avoid: new Set(), avoidBreaths: new Set(), restOnly: false, breathSecs: BREATH_SECS };
 
 /**
  * Flatten a session into timed steps.
@@ -592,12 +734,35 @@ function breathTotalSecs(breath, rounds, noHolds) {
 let memFlows = null;
 const generatedFlows = new Map();
 
+/** Spoken texts a saved flow may keep without a uses tag: the rituals and the meditations. */
+function trustedSay(say) {
+  const rituals = [OPEN_STEP, CLOSE_STEP, typeof SEATED_CLOSE_STEP === "undefined" ? null : SEATED_CLOSE_STEP].filter(Boolean);
+  return rituals.some((r) => r.say === say) || MEDITATIONS.some((m) => m.say === say);
+}
+
+/** The breathing practice a step's spoken text comes from, as written by the generator. */
+function breathForSay(say) {
+  return BREATHS.find((b) => b.how.join(" ") === say) || null;
+}
+
+function cleanCustomStep(st) {
+  const say = String(st.say || "");
+  const step = { t: String(st.t).slice(0, 60), say, s: clamp(Math.round(Number(st.s)) || 60, 10, 1800) };
+  const uses = strings(st.uses).filter((id) => own(POSE_BY_ID, id));
+  const fromSay = breathForSay(say);
+  const breath = own(BREATH_BY_ID, st.breath) ? st.breath : fromSay ? fromSay.id : null;
+  if (uses.length) step.uses = uses;
+  if (breath) step.breath = breath;
+  // A custom step must say what it is. Untagged movement text could be anything, so it is dropped.
+  return uses.length || breath || trustedSay(say) ? step : null;
+}
+
 function cleanFlowStep(st) {
   if (typeof st === "string") return st.slice(0, 60);
   if (!isObj(st)) return null;
-  if (st.p) return POSE_BY_ID[st.p] ? { p: st.p, b: clamp(Math.round(Number(st.b)) || 5, 1, 60) } : null;
+  if (st.p) return own(POSE_BY_ID, st.p) ? { p: st.p, b: clamp(Math.round(Number(st.b)) || 5, 1, 60) } : null;
   if (st.sun) return { sun: clamp(Math.round(Number(st.sun)) || 2, 1, 12) };
-  if (st.t) return { t: String(st.t).slice(0, 60), say: String(st.say || ""), s: clamp(Math.round(Number(st.s)) || 60, 10, 1800) };
+  if (st.t) return cleanCustomStep(st);
   return null;
 }
 
@@ -614,6 +779,7 @@ function cleanFlow(raw) {
     color: /^#[0-9a-f]{6}$/i.test(raw.color) ? raw.color : "#E8743B",
     about: String(raw.about || "A sequence you built yourself."),
     custom: true,
+    ...(strings(raw.requires).filter((id) => own(POSE_BY_ID, id)).length ? { requires: strings(raw.requires).filter((id) => own(POSE_BY_ID, id)) } : {}),
     steps,
   };
 }
@@ -660,7 +826,7 @@ function duplicateFlow(id) {
 /** Today's flow from the plan. The seed is the local date so it holds all day. */
 function todaysFlow(now = new Date()) {
   const plan = readPlan();
-  const focus = plan && FOCUS[plan.answers.goal] ? plan.answers.goal : "balanced";
+  const focus = plan && own(FOCUS, plan.answers.goal) ? plan.answers.goal : "balanced";
   const flow = generateFlow({
     minutes: (plan && Number(plan.answers.time)) || 20,
     level: plan ? plan.lvl : 1,
@@ -679,7 +845,8 @@ function rememberFlow(flow) {
 
 /** Find any session by id: built in, saved, today's flow or a flow generated this visit. */
 function findSession(id) {
-  if (SESSION_BY_ID[id]) return SESSION_BY_ID[id];
+  if (typeof id !== "string") return null;
+  if (own(SESSION_BY_ID, id)) return SESSION_BY_ID[id];
   if (id === TODAY_FLOW_ID) return todaysFlow();
   return readFlows().find((f) => f.id === id) || generatedFlows.get(id) || null;
 }
@@ -708,7 +875,8 @@ function decodePart(part) {
  * ok is false when the hash should be rewritten, for example an unknown page or item.
  */
 function parseRoute(hash, current = "today") {
-  const parts = String(hash).replace(/^#\/?/, "").split("/").filter(Boolean).map(decodePart);
+  const path = String(hash).split("?")[0];
+  const parts = path.replace(/^#\/?/, "").split("/").filter(Boolean).map(decodePart);
   if (parts[0] === "quiz") return { page: current || "today", key: "quiz", ok: true };
   if (!PAGE_IDS.includes(parts[0])) return { page: "today", key: null, ok: parts.length === 0 };
   const find = ROUTE_FINDERS[parts[0]];

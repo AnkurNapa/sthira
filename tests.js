@@ -10,7 +10,7 @@ const assert = require("assert");
 function sandbox(storage) {
   const ctx = vm.createContext({ console, Date, Math, JSON, Set, Map, Object, Array, Number, String, Boolean, RegExp });
   if (storage) ctx.localStorage = storage;
-  ["data.js", "plan.js", "generator.js", "core.js", "stats.js"].forEach((f) => {
+  ["data.js", "align.js", "plan.js", "generator.js", "core.js", "stats.js"].forEach((f) => {
     vm.runInContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
   });
   // Clone results out of the sandbox so deep equality does not trip on realm differences.
@@ -225,16 +225,6 @@ test("routes parse pages, items, the quiz and unknown hashes", () => {
   assert.deepStrictEqual(run("parseRoute('#/learn/%E0%A4')"), { page: "learn", key: null, ok: false });
 });
 
-test("figure list in ui.js matches the files in figures/", () => {
-  const src = fs.readFileSync(path.join(__dirname, "ui.js"), "utf8");
-  const listed = JSON.parse(`[${src.match(/FIGURE_IDS = new Set\(\[([\s\S]*?)\]\)/)[1].trim().replace(/,$/, "")}]`);
-  const files = fs.readdirSync(path.join(__dirname, "figures")).filter((f) => f.endsWith(".svg")).map((f) => f.slice(0, -4));
-  assert.deepStrictEqual([...listed].sort(), files.sort());
-  const run = sandbox(memoryStorage());
-  const sun = run("SURYA.map((_, i) => 'surya-' + i)");
-  sun.forEach((id) => assert.ok(listed.includes(id), id));
-});
-
 test("media.js agrees with media/manifest.json and every name used exists", () => {
   const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "media", "manifest.json"), "utf8"));
   const src = fs.readFileSync(path.join(__dirname, "media.js"), "utf8");
@@ -447,6 +437,154 @@ test("generator APM presets move time from asana to breath and mind", () => {
   const mind = share("mind");
   assert.ok(asana.a > balanced.a && balanced.a > mind.a, JSON.stringify({ asana, balanced, mind }));
   assert.ok(mind.pm > balanced.pm && balanced.pm > asana.pm);
+});
+
+function ctxFor(run, conditions, restOnly = false) {
+  return `{ avoid: healthFilter(${JSON.stringify(conditions)}).avoid, avoidBreaths: healthFilter(${JSON.stringify(conditions)}).avoidBreaths, restOnly: ${restOnly}, noHolds: false, breathSecs: 6 }`;
+}
+
+test("A1: the pacer refuses practices the plan avoids", () => {
+  const run = sandbox(memoryStorage());
+  const blocked = (cond, id) => run(`breathAllowed("${id}", ${ctxFor(run, [cond])})`) === false;
+  ["kapalabhati", "wood-chopping"].forEach((id) => {
+    assert.ok(blocked("pregnancy", id), `pregnancy ${id}`);
+    assert.ok(blocked("highbp", id), `highbp ${id}`);
+    assert.ok(blocked("surgery", id), `surgery ${id}`);
+  });
+  assert.ok(run(`healthFilter(["pregnancy"]).avoidBreaths.has("surya-bhedana")`) ? blocked("pregnancy", "surya-bhedana") : true);
+  assert.ok(run(`breathAllowed("abdominal", ${ctxFor(run, ["pregnancy"])})`));
+  assert.strictEqual(run(`breathAllowed("constructor", ${ctxFor(run, [])})`), false);
+});
+
+test("R1: stale saved plans and imports get today's avoid lists", () => {
+  const store = memoryStorage();
+  store.data["sthira.plan"] = JSON.stringify({
+    created: "2026-10-01", answers: { frame: "v", skin: "v", energy: "p", sleep: "v", stress: "v", weather: "k", experience: "new", goal: "calm", time: "20", conditions: ["pregnancy"] },
+    dosha: { primary: "v" }, lvl: 1, poses: ["tadasana", "bhujangasana"], breaths: ["kapalabhati", "abdominal"],
+    health: { ids: ["pregnancy"], avoid: ["navasana"], avoidBreaths: [], restOnly: false, noHolds: false, tips: [] },
+    journey: [{ title: "A", when: "Weeks 1 to 2", days: 3, sessions: ["morning"], poses: [], breaths: [], articles: [] }],
+  });
+  const run = sandbox(store);
+  const expected = run(`[...healthFilter(["pregnancy"]).avoid].sort()`);
+  assert.deepStrictEqual(run("readPlan().health.avoid.slice().sort()"), expected);
+  assert.ok(run("readPlan().health.avoidBreaths.includes('kapalabhati')"));
+  assert.ok(!run("readPlan().poses.includes('bhujangasana')"));
+  assert.strictEqual(run("readPlan().created"), "2026-10-01");
+  const res = run(`importData({ app: "sthira", version: 1, store: {}, plan: { created: "2026-09-01", answers: {}, dosha: { primary: "k" }, health: { ids: ["knee"], avoid: [] }, journey: [{ title: "A", when: "Weeks 1 to 2", days: 3, sessions: [] }] } })`);
+  assert.ok(res.ok);
+});
+
+test("R1: an import with condition ids but an empty avoid list is rebuilt", () => {
+  const run = sandbox(memoryStorage());
+  run(`importData({ app: "sthira", version: 1, store: {}, plan: { created: "2026-09-01", answers: {}, dosha: { primary: "k" }, health: { ids: ["knee"], avoid: [], avoidBreaths: [] }, journey: [{ title: "A", when: "Weeks 1 to 2", days: 3, sessions: [] }] } })`);
+  assert.ok(run("readPlan().health.avoid.includes('malasana')"));
+  assert.ok(run("readPlan().health.avoid.length") > 5);
+});
+
+test("R3, R4, R6: one sun list, tagged breath steps and rest only poses", () => {
+  const run = sandbox(memoryStorage());
+  assert.ok(run("SUN_STEP_POSES.includes('anjaneyasana')"));
+  const knee = ctxFor(run, ["knee"]);
+  if (run(`healthFilter(["knee"]).avoid.has("anjaneyasana")`)) {
+    assert.ok(!run(`flattenSession(SESSION_BY_ID.morning, ${knee}).steps.some((s) => s.phase === "Sun salutation")`));
+  }
+  const tagged = run(`SESSIONS.flatMap((s) => s.steps).filter((st) => st && st.breath).map((st) => st.breath)`);
+  tagged.forEach((id) => {
+    const cond = run(`Object.keys(CONDITIONS).find((c) => CONDITIONS[c].avoidBreaths.includes("${id}"))`);
+    if (!cond) return;
+    const left = run(`SESSIONS.some((s) => flattenSession(s, ${ctxFor(run, [cond])}).leftOut.some((st) => st.breath === "${id}"))`);
+    assert.ok(left, `${id} step left out for ${cond}`);
+  });
+  const restCtx = "{ avoid: new Set(), avoidBreaths: new Set(), restOnly: true, breathSecs: 6 }";
+  assert.ok(!run(`flattenSession(SESSION_BY_ID.morning, ${restCtx}).steps.some((s) => s.poseId && !SAFE_IN_REST.includes(s.poseId))`));
+});
+
+test("R5: imported flows lose untagged movement text but keep rituals and tagged breathing", () => {
+  const store = memoryStorage();
+  const breath = "BREATHS[0].how.join(' ')";
+  const run = sandbox(store);
+  const flow = run(`cleanFlow({ id: "my-x", name: "X", steps: ["Poses", { p: "tadasana", b: 5 }, { t: "Headstand", say: "Place the crown of the head on the floor and lift both legs up.", s: 60 }, "Breathing", { t: "Belly", say: ${breath}, s: 60 }, "Closing", CLOSE_STEP] })`);
+  assert.ok(!JSON.stringify(flow).includes("Headstand"));
+  assert.ok(flow.steps.some((st) => st.breath === run("BREATHS[0].id")));
+  assert.ok(flow.steps.some((st) => st.t === "Closing"));
+  const tagged = run(`cleanFlow({ id: "my-y", name: "Y", steps: ["S", { t: "Twist", uses: ["bharadvajasana", "gone"], say: "Turn gently.", s: 30 }] })`);
+  assert.deepStrictEqual(tagged.steps[1].uses, ["bharadvajasana"]);
+});
+
+test("C2, C17: bad history items and badge values are dropped", () => {
+  const store = memoryStorage();
+  store.data["sthira.v1"] = JSON.stringify({ history: [
+    { ts: 1, date: "2026-11-01", kind: "session", id: "morning", title: "Morning Wake-Up", min: 20, done: true },
+    { date: "2026-11-02", kind: "session", id: "desk", title: 42, min: 5 },
+    { date: "not a date", kind: "session", id: "desk", title: "Desk Relief", min: 5 },
+    { date: "2026-11-03", kind: "evil", id: "x", title: "X" },
+    { date: "2026-11-04", kind: "breath", id: "nadi", title: "Alternate Nostril", min: "abc" },
+    null, "text"], badges: { first: "2026-11-01", ten: 12, streak3: "yesterday" } });
+  const run = sandbox(store);
+  assert.strictEqual(run("readStore().history.length"), 2);
+  assert.strictEqual(run("readStore().history[1].min"), 0);
+  assert.deepStrictEqual(run("readStore().badges"), { first: "2026-11-01" });
+});
+
+test("C9, C19: short practice leaves no row, a breath is tried only when done", () => {
+  const run = sandbox(memoryStorage());
+  run("recordBreath({ breath: BREATH_BY_ID.nadi, minutes: 0.2, done: false })");
+  run("recordSession({ session: SESSION_BY_ID.desk, minutes: 0.3, completed: false })");
+  assert.strictEqual(run("readStore().history.length"), 0);
+  run("recordBreath({ breath: BREATH_BY_ID.nadi, minutes: 1, done: false })");
+  assert.deepStrictEqual(run("readStore().breathsTried"), []);
+  run("recordBreath({ breath: BREATH_BY_ID.nadi, minutes: 1, done: true })");
+  assert.deepStrictEqual(run("readStore().breathsTried"), ["nadi"]);
+});
+
+test("C10: skipping through does not complete a session", () => {
+  const run = sandbox(memoryStorage());
+  assert.strictEqual(run("countsAsComplete(30, 600)"), false);
+  assert.strictEqual(run("countsAsComplete(300, 600)"), true);
+});
+
+test("C4: mid practice minutes are not counted twice", () => {
+  const run = sandbox(memoryStorage());
+  run(`addMinutes("2026-11-07", { a: 5 })`);
+  run(`recordSession({ session: SESSION_BY_ID.morning, minutes: 8, completed: false, dateKey: "2026-11-07", cats: { a: 8 }, logged: { a: 5 } })`);
+  assert.strictEqual(run(`readStore().log["2026-11-07"].a`), 8);
+});
+
+test("C15, C16, C18: prototype names and query strings never break lookups", () => {
+  const run = sandbox(memoryStorage());
+  ["constructor", "__proto__", "toString"].forEach((id) => {
+    assert.strictEqual(run(`findSession("${id}")`), null, id);
+    assert.strictEqual(run(`parseRoute("#/sessions/${id}").key`), null, id);
+    assert.strictEqual(run(`own(POSE_BY_ID, "${id}")`), false);
+  });
+  assert.strictEqual(run(`cleanPlan({ dosha: { primary: "toString" }, health: {}, journey: [{}] })`), null);
+  run(`savePlan({ ...buildPlan({ experience: "new", conditions: ["none"] }), answers: { goal: "__proto__", time: "20" } })`);
+  assert.strictEqual(run("todaysFlow().id"), "today-flow");
+  assert.deepStrictEqual(run(`parseRoute("#/progress?x=1")`), { page: "progress", key: null, ok: true });
+  assert.strictEqual(run(`parseRoute("#/poses/tadasana?from=share").key`), "poses/tadasana");
+});
+
+test("D: alignment cues swap sides and fit inside the hold", () => {
+  const run = sandbox(memoryStorage());
+  const flat = run("flattenSession(SESSION_BY_ID.morning).steps");
+  const left = flat.find((s) => s.poseId === "vrikshasana" && s.side === "Left side");
+  const cues = run(`alignCues(${JSON.stringify(left)}).cues`);
+  assert.ok(cues.some((c) => /left knee/.test(c)), cues.join(" | "));
+  const sun = flat.find((s) => Number.isInteger(s.suryaIndex));
+  assert.strictEqual(run(`alignCues(${JSON.stringify(sun)}).speak`), false);
+  const plan = run(`cueSchedule(35, "Tree Pose. Stand tall.", ["One two three four.", "Five six seven eight.", "A much longer cue that takes a good number of seconds to say out loud slowly."], 0.9)`);
+  plan.forEach((c) => assert.ok(c.at >= 35 * 0.4 && c.at + run(`speechSecs(${JSON.stringify(c.text)}, 0.9)`) <= 35 - 0.5));
+  assert.strictEqual(run(`cueSchedule(9, "A long entry instruction with many many words to read out loud for the pose here.", ["Short cue."], 0.9).length`), 0);
+});
+
+test("E: music plays in meditation and relaxation by default", () => {
+  const run = sandbox(memoryStorage());
+  assert.strictEqual(run(`musicShouldPlay("calm", "Meditation", "m")`), true);
+  assert.strictEqual(run(`musicShouldPlay("calm", "Relaxation", "r")`), true);
+  assert.strictEqual(run(`musicShouldPlay("calm", "Poses", "a")`), false);
+  assert.strictEqual(run(`musicShouldPlay("all", "Poses", "a")`), true);
+  assert.strictEqual(run(`musicShouldPlay("off", "Meditation", "m")`), false);
+  assert.strictEqual(run("settings().music"), "calm");
 });
 
 let failed = 0;

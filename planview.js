@@ -15,7 +15,10 @@ const DOSHA_NOTE = "Doshas come from traditional Ayurvedic guidance. They are a 
 
 /* Quiz */
 
+const QUIZ_TAP_GUARD_MS = 400;
+
 function showQuiz(routeKey) {
+  if (!readStore().welcomed) markWelcomed();
   const answers = {};
   let step = 0;
   const view = el("div", { class: "quiz" });
@@ -37,8 +40,13 @@ function showQuiz(routeKey) {
       el("span", { class: "option-mark", "aria-hidden": "true" }, icon("check", 16)));
   }
 
+  // A double tap must not answer the next question too: taps just after a new question appears are ignored.
+  let shownAt = 0;
+  const tooSoon = () => Date.now() - shownAt < QUIZ_TAP_GUARD_MS;
+
   function singleOptions(q) {
     return q.options.map((o) => optionCard(q, o, answers[q.id] === o.v, () => {
+      if (tooSoon()) return;
       answers[q.id] = o.v;
       show(step + 1);
     }));
@@ -46,7 +54,7 @@ function showQuiz(routeKey) {
 
   function multiOptions(q) {
     const picked = new Set(answers[q.id] || []);
-    const cont = el("button", { type: "button", class: "pill wide", disabled: picked.size ? null : true, onclick: () => { answers[q.id] = [...picked]; show(step + 1); } }, "Continue");
+    const cont = el("button", { type: "button", class: "pill wide", disabled: picked.size ? null : true, onclick: () => { if (tooSoon()) return; answers[q.id] = [...picked]; show(step + 1); } }, "Continue");
     const cards = q.options.map((o) => {
       const card = optionCard(q, o, picked.has(o.v), () => {
         if (picked.has(o.v)) picked.delete(o.v);
@@ -72,6 +80,7 @@ function showQuiz(routeKey) {
       return;
     }
     step = Math.max(0, n);
+    shownAt = Date.now();
     const q = QUIZ[step];
     const heading = el("h2", { class: "quiz-q", tabindex: "-1" }, q.q);
     view.replaceChildren(header(), el("div", { class: "quiz-body" },
@@ -273,6 +282,23 @@ function openCelebration(badges) {
 
 /* Settings */
 
+/** Music mode, track and volume. The track list loads from the manifest when Settings opens. */
+function musicSettings(s) {
+  const trackSelect = el("select", { class: "select", "aria-label": "Music track" }, el("option", { value: "" }, "Default"));
+  trackSelect.addEventListener("change", () => { updateSettings({ musicTrack: trackSelect.value }); musicTrackChanged(); });
+  musicTracks().then((tracks) => {
+    const current = musicTrack(tracks);
+    trackSelect.replaceChildren(...tracks.map((t) => el("option", { value: t.id, selected: current && current.id === t.id ? true : null }, t.name)));
+  });
+  const volume = el("input", { type: "range", min: "0", max: "100", step: "5", value: String(Math.round(s.musicVolume * 100)), class: "range", "aria-label": "Music volume" });
+  volume.addEventListener("input", () => { updateSettings({ musicVolume: Number(volume.value) / 100 }); musicVolumeChanged(); });
+  return group([
+    selectRow("Music", s.music, [["off", "Off"], ["calm", "During meditation and relaxation"], ["all", "Whole session"]], (v) => updateSettings({ music: v })),
+    el("label", { class: "row setting" }, el("span", { class: "row-body" }, el("span", { class: "row-text" }, el("span", { class: "row-title" }, "Track")), trackSelect)),
+    el("label", { class: "row setting" }, el("span", { class: "row-body" }, el("span", { class: "row-text" }, el("span", { class: "row-title" }, "Volume")), volume)),
+  ]);
+}
+
 function openSettings() {
   const s = settings();
   const offline = "serviceWorker" in navigator && navigator.serviceWorker.controller;
@@ -285,6 +311,8 @@ function openSettings() {
       switchRow("Chime between steps", s.chime, (v) => updateSettings({ chime: v })),
       selectRow("Seconds per breath", s.breathSecs, [5, 6, 7, 8].map((n) => [n, `${n} seconds`]), (v) => { updateSettings({ breathSecs: Number(v) }); refreshView(); }),
     ].filter(Boolean)),
+    sectionTitle("Music"),
+    musicSettings(s),
     sectionTitle("Goal"),
     group([selectRow("APM split of the goal", s.apmSplit.join("/"), [["70/15/15", "70 asana, 15 pranayama, 15 meditation"], ["60/20/20", "60, 20, 20"], ["50/25/25", "50, 25, 25"], ["40/30/30", "40, 30, 30"]], (v) => { updateSettings({ apmSplit: v.split("/").map(Number) }); refreshView(); }),
       selectRow("Weekly practice goal", s.weeklyGoal, [[0, "From my plan"], [30, "30 minutes"], [60, "60 minutes"], [90, "90 minutes"], [120, "120 minutes"], [180, "180 minutes"]], (v) => { updateSettings({ weeklyGoal: Number(v) }); refreshView(); })]),

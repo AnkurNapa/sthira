@@ -151,11 +151,11 @@ function generateFlow(options) {
 
   const breathId = pickBreath(plan, rand);
   const breath = BREATHS.find((b) => b.id === breathId);
-  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(minutes > 10 ? 60 : 45, Math.round(total * apm.b)) });
+  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(minutes > 10 ? 60 : 30, Math.round(total * apm.b)) });
   const med = MEDITATIONS[Math.floor(rand() * MEDITATIONS.length)];
-  steps.push("Meditation", { t: med.t, say: med.say, s: Math.max(60, Math.round(total * apm.m)) });
+  steps.push("Meditation", { t: med.t, say: med.say, s: Math.max(minutes > 10 ? 60 : 45, Math.round(total * apm.m)) });
 
-  const relax = Math.max(minutes > 10 ? MIN_RELAX_SECS : 120, total * SHAPE[6].share);
+  const relax = Math.max(minutes > 10 ? MIN_RELAX_SECS : 90, total * SHAPE[6].share);
   steps.push("Relaxation", { p: "savasana", b: Math.round(relax / breathSecs) });
   steps.push("Closing", CLOSE_STEP);
 
@@ -208,7 +208,7 @@ if (typeof process !== "undefined" && process.env && process.env.STHIRA_CHECK) {
       [1, 2, 3].forEach((lvl) => Object.keys(APM).forEach((apm) => {
         const flow = generateFlow({ minutes: m, level: lvl, focus: f, apm, seed: "t" + m + f + lvl + apm });
         const secs = sessionSecs(flow);
-        assert.ok(secs > m * 60 * 0.75 && secs < m * 60 * 1.3, `${m} ${f} ${lvl} gave ${Math.round(secs / 60)} min`);
+        assert.ok(secs > m * 60 * 0.75 && secs <= m * 60 * 1.25, `${m} ${f} ${lvl} gave ${Math.round(secs / 60)} min`);
         const poseSteps = flow.steps.filter((s) => s.p);
         assert.strictEqual(poseSteps[poseSteps.length - 1].p, "savasana", "the last pose is always relaxation");
         assert.strictEqual(flow.steps[flow.steps.length - 1], CLOSE_STEP, "ends with the closing ritual");

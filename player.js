@@ -29,21 +29,38 @@ const canSpeak = () => Boolean(voice.synth) || hasEmma();
 // Emma clips are recorded at natural pace. The Normal setting (0.9) plays them at 1x.
 const EMMA_RATE_BASE = 0.9;
 
-/** Speak in the Emma voice when a clip exists for every sentence, else in the browser voice. */
-function speak(text) {
-  if (!settings().voice) return;
-  if (hasEmma() && emmaSpeak(text, settings().rate / EMMA_RATE_BASE)) {
-    if (voice.synth) voice.synth.cancel();
+/** Speak in the browser voice. */
+function browserSpeak(text, done) {
+  if (!voice.synth) {
+    done();
     return;
   }
-  if (!voice.synth) return;
-  if (typeof emmaStop === "function") emmaStop();
   voice.synth.cancel();
   const u = new SpeechSynthesisUtterance(text);
   u.rate = settings().rate;
   u.lang = voice.pick ? voice.pick.lang : "en-GB";
   if (voice.pick) u.voice = voice.pick;
+  u.onend = done;
+  u.onerror = done;
   voice.synth.speak(u);
+}
+
+/**
+ * Speak in the Emma voice when a clip exists for every sentence, else in the browser voice.
+ * If a clip fails (for example offline) the same text is spoken by the browser voice.
+ * Music ducks while either voice speaks.
+ */
+function speak(text) {
+  if (!settings().voice) return;
+  const done = () => musicDuck(false);
+  musicDuck(true);
+  const fallback = () => browserSpeak(text, done);
+  if (hasEmma() && emmaSpeak(text, settings().rate / EMMA_RATE_BASE, { onEnd: done, onError: fallback })) {
+    if (voice.synth) voice.synth.cancel();
+    return;
+  }
+  if (typeof emmaStop === "function") emmaStop();
+  fallback();
 }
 
 function stopSpeech() {
@@ -144,6 +161,9 @@ function makeCountdown({ onTick, onEnd }) {
 
 const visibilityHooks = new Set();
 
+// Leaving the page (refresh, close or app switch) saves progress like hiding it.
+window.addEventListener("pagehide", () => visibilityHooks.forEach((fn) => fn("hidden")));
+
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible" && wake.wanted) keepAwake();
   visibilityHooks.forEach((fn) => fn(document.visibilityState));
@@ -198,6 +218,7 @@ function buildPlayerUI() {
     next: el("p", { class: "player-next" }),
     notice: el("p", { class: "player-notice", role: "status" }),
     art: el("div", { class: "player-art" }),
+    align: el("div", { class: "player-align" }),
     bar: el("span", { class: "progress-fill" }),
     progress: el("div", { class: "progress", role: "progressbar", "aria-label": "Session progress", "aria-valuemin": "0", "aria-valuemax": "100" }),
     ringFg: ring.fg,
@@ -207,7 +228,7 @@ function buildPlayerUI() {
   ui.visual = el("div", { class: "player-visual" }, ui.art, el("div", { class: "ring-wrap" }, ring.svg, ui.clock));
   ui.stage = el("div", { class: "player-main" },
     ui.visual,
-    el("div", { class: "player-text" }, ui.phase, ui.live, ui.cue, ui.next, ui.notice));
+    el("div", { class: "player-text" }, ui.phase, ui.live, ui.align, ui.cue, ui.next, ui.notice));
   return ui;
 }
 
@@ -235,6 +256,7 @@ function startSession(session, startIdx = 0, trigger) {
   if (trigger) trigger.disabled = true;
   setTimeout(() => { if (trigger) trigger.disabled = false; }, TAP_GUARD_MS * 2);
   playerOpen = true;
+  if (!readStore().welcomed) markWelcomed();
   unlockAudio();
   unlockVoice();
   keepAwake();
@@ -249,6 +271,10 @@ function runPlayer(session, steps, startIdx) {
   let idx = startIdx;
   let finished = false;
   let earned = [];
+  // Minutes already written to the day log by a mid practice save (page hidden or closed).
+  const logged = emptyCats();
+  let cuePlan = [];
+  let nextCue = 0;
   // Seconds spent in each pose and in each APM category, added when a step ends.
   const poseTime = {};
   const catSecs = emptyCats();
@@ -277,15 +303,49 @@ function runPlayer(session, steps, startIdx) {
     ui.stage,
     el("div", { class: "player-bottom" }, ui.progress, controls));
 
+  const entryText = (s) => [s.title, s.side, s.text].filter(Boolean).join(". ");
+
   function speakStep() {
+    speak(entryText(steps[idx]));
+  }
+
+  function paintAlign() {
+    const { cues, speak: spoken } = alignCues(steps[idx]);
+    cuePlan = spoken ? cueSchedule(steps[idx].secs, entryText(steps[idx]), cues, settings().rate) : [];
+    nextCue = 0;
+    ui.align.replaceChildren(...(cues.length ? [el("p", { class: "align-title" }, "Alignment"), el("ul", { class: "align-list" }, cues.map((c) => el("li", {}, c)))] : []));
+  }
+
+  /** Speak and highlight the next alignment cue once its time in the hold arrives. */
+  function runCues(ms) {
+    const elapsed = steps[idx].secs - ms / 1000;
+    while (nextCue < cuePlan.length && elapsed >= cuePlan[nextCue].at) {
+      const cue = cuePlan[nextCue];
+      ui.align.querySelectorAll("li").forEach((li, i) => li.classList.toggle("speaking", i === cue.i));
+      speak(cue.text);
+      nextCue += 1;
+    }
+  }
+
+  function syncMusic() {
     const s = steps[idx];
-    speak([s.title, s.side, s.text].filter(Boolean).join(". "));
+    musicSet(!finished && clock.running && musicShouldPlay(settings().music, s.phase, phaseCategory(s.phase, session.id)));
+  }
+
+  /** Save minutes played so far and the resume point, for when the page is hidden or closed. */
+  function flushProgress() {
+    if (finished || clock.playedMs < MIN_RECORD_SECS * 1000) return;
+    closeStep();
+    const cats = catMinutes();
+    addMinutes(dateKey, subtractCats(cats, logged));
+    APM_KEYS.forEach((k) => { logged[k] = cats[k]; });
+    if (idx > 0) saveResume(session.id, idx);
   }
 
   function paintStep() {
     const s = steps[idx];
     const next = steps[idx + 1];
-    const art = s.art ? poseArt(s.art, { size: "player", figureOnly: true }) : null;
+    const art = s.art ? poseArt(s.art, { size: "player" }) : null;
     ui.art.replaceChildren(art || "");
     ui.visual.classList.toggle("has-art", Boolean(art));
     const cat = phaseCategory(s.phase, session.id);
@@ -300,6 +360,7 @@ function runPlayer(session, steps, startIdx) {
 
   function paintTime(ms = clock.remaining) {
     const s = steps[idx];
+    runCues(ms);
     ui.clock.textContent = fmtClock(ms);
     ui.ringFg.style.strokeDashoffset = String(RING_C * (1 - ms / (s.secs * 1000)));
     const pct = Math.round(((before[idx] + s.secs - ms / 1000) / totalSecs) * 100);
@@ -318,9 +379,11 @@ function runPlayer(session, steps, startIdx) {
     clock.set(steps[idx].secs);
     ui.notice.textContent = "";
     paintStep();
+    paintAlign();
     paintTime();
     chime();
     speakStep();
+    syncMusic();
   }
 
   function jump(n) {
@@ -335,6 +398,7 @@ function runPlayer(session, steps, startIdx) {
     else clock.stop();
     playBtn.replaceChildren(icon(on ? "pause" : "play", 34));
     playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
+    syncMusic();
   }
 
   function togglePlay() {
@@ -350,7 +414,9 @@ function runPlayer(session, steps, startIdx) {
   }
 
   function onVisibility(state) {
-    if (state === "hidden" && clock.running) {
+    if (state !== "hidden") return;
+    flushProgress();
+    if (clock.running) {
       setPlaying(false);
       stopSpeech();
       ui.notice.textContent = "Paused while you were away. Press play to carry on.";
@@ -361,11 +427,14 @@ function runPlayer(session, steps, startIdx) {
     finished = true;
     clock.stop();
     stopSpeech();
-    recordSession({ session, minutes: clock.playedMs / 60000, completed: true, dateKey, poses: poseTime, cats: catMinutes() });
+    musicSet(false);
+    // Skipping through does not count: at least half the planned time must be played.
+    const completed = countsAsComplete(clock.playedMs / 1000, totalSecs);
+    recordSession({ session, minutes: clock.playedMs / 60000, completed, dateKey, poses: poseTime, cats: catMinutes(), logged });
     clearResume();
-    view.replaceChildren(completionView(session, clock.playedMs, () => sheet.close()));
+    view.replaceChildren(completionView(session, clock.playedMs, () => sheet.close(), completed));
     chime();
-    speak("Well done. Your session is complete.");
+    speak(completed ? "Well done. Your session is complete." : "Well done.");
     earned = afterPractice();
   }
 
@@ -378,26 +447,33 @@ function runPlayer(session, steps, startIdx) {
   function cleanup() {
     clock.stop();
     stopSpeech();
+    musicSet(false);
     releaseAwake();
     visibilityHooks.delete(onVisibility);
     playerOpen = false;
     if (!finished) {
       if (idx > 0) saveResume(session.id, idx);
       closeStep();
-      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey, poses: poseTime, cats: catMinutes() });
+      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey, poses: poseTime, cats: catMinutes(), logged });
       earned = afterPractice();
     }
     celebrateLater(earned);
   }
 
-  const sheet = openSheet(view, { label: `${session.name} player`, full: true, dark: true, bare: true, beforeClose, onClose: cleanup });
+  const sheet = openSheet(view, { label: `${session.name} player`, full: true, dark: true, bare: true, history: true, beforeClose, onClose: cleanup });
   visibilityHooks.add(onVisibility);
   go(idx);
   setPlaying(true);
 }
 
-function completionView(session, playedMs, onDone) {
+function completionView(session, playedMs, onDone, completed = true) {
   const mins = Math.round(playedMs / 60000);
+  if (!completed) {
+    return el("div", { class: "done-view" },
+      el("h2", { class: "player-title", tabindex: "-1" }, "Session ended"),
+      el("p", { class: "player-sub" }, "Most steps were skipped, so this does not count as a finished session. The time you practised is saved."),
+      el("button", { type: "button", class: "pill", onclick: onDone }, "Done"));
+  }
   const store = readStore();
   const streak = streakDays(store.log);
   return el("div", { class: "done-view" },
@@ -456,6 +532,11 @@ function makeCircle() {
 
 function openPacer(breath, rounds) {
   if (playerOpen) return;
+  // Safety: a practice the plan avoids never starts, whatever button or link asked for it.
+  if (!breathAllowed(breath.id)) {
+    showToast(`${breath.name} is not in your plan.`);
+    return;
+  }
   playerOpen = true;
   unlockAudio();
   unlockVoice();
@@ -472,6 +553,9 @@ function openPacer(breath, rounds) {
   let pi = 0;
   let finished = false;
   let earned = [];
+  // Done only after at least one full round has been breathed.
+  let fullRounds = 0;
+  let loggedMin = 0;
   const clock = makeCountdown({ onTick: (ms) => { count.textContent = String(Math.ceil(ms / 1000)); }, onEnd: advance });
   const playBtn = ctlButton("pause", "Pause", togglePlay, "main");
   const controls = el("div", { class: "player-controls" }, playBtn);
@@ -496,6 +580,7 @@ function openPacer(breath, rounds) {
     if (pi >= pattern.length) {
       pi = 0;
       round += 1;
+      fullRounds += 1;
       if (round > rounds) {
         finish();
         return;
@@ -515,6 +600,7 @@ function openPacer(breath, rounds) {
     shape.core.classList.toggle("paused", !on);
     playBtn.replaceChildren(icon(on ? "pause" : "play", 34));
     playBtn.setAttribute("aria-label", on ? "Pause" : "Play");
+    musicSet(on && !finished && settings().music !== "off");
   }
 
   function togglePlay() {
@@ -524,8 +610,18 @@ function openPacer(breath, rounds) {
     else stopSpeech();
   }
 
+  /** Save the minutes so far to the day log when the page is hidden or closed. */
+  function flushProgress() {
+    if (finished || clock.playedMs < MIN_RECORD_SECS * 1000) return;
+    const mins = clock.playedMs / 60000;
+    addMinutes(dateKey, { p: mins - loggedMin });
+    loggedMin = mins;
+  }
+
   function onVisibility(state) {
-    if (state === "hidden" && clock.running) {
+    if (state !== "hidden") return;
+    flushProgress();
+    if (clock.running) {
       setPlaying(false);
       stopSpeech();
       notice.textContent = "Paused while you were away. Press play to carry on.";
@@ -533,13 +629,14 @@ function openPacer(breath, rounds) {
   }
 
   function save() {
-    recordBreath({ breath, minutes: clock.playedMs / 60000, dateKey });
+    recordBreath({ breath, minutes: clock.playedMs / 60000, dateKey, done: fullRounds >= 1, logged: loggedMin });
     clock.playedMs = 0;
   }
 
   function finish() {
     finished = true;
     clock.stop();
+    musicSet(false);
     shape.core.classList.remove("pulse");
     label.textContent = "Well done";
     count.textContent = "";
@@ -554,6 +651,7 @@ function openPacer(breath, rounds) {
   function cleanup() {
     clock.stop();
     stopSpeech();
+    musicSet(false);
     releaseAwake();
     visibilityHooks.delete(onVisibility);
     playerOpen = false;
@@ -571,7 +669,7 @@ function openPacer(breath, rounds) {
       el("div", { class: "pacer-stage" }, shape.circle, el("div", { class: "pacer-text" }, label, count)),
       el("div", { class: "player-text" }, left, holdsNote, notice)),
     el("div", { class: "player-bottom" }, controls));
-  const sheet = openSheet(view, { label: `${breath.name} pacer`, full: true, dark: true, bare: true, onClose: cleanup });
+  const sheet = openSheet(view, { label: `${breath.name} pacer`, full: true, dark: true, bare: true, history: true, onClose: cleanup });
   visibilityHooks.add(onVisibility);
   startPhase();
   setPlaying(true);

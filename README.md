@@ -53,7 +53,7 @@ Requirements, design, test plan and release steps live in [docs](docs/). Changes
 
 ## Credits
 
-- Pose illustrations: [asanakit](https://github.com/franzenzenhofer/asanakit) by Franz Enzenhofer, MIT licence.
+- Pose photos: see photos/poses/CREDITS.md and the Credits page.
 - Emma voice: recorded with Kokoro, Apache 2.0 licence.
 - Photos and videos: see [media/CREDITS.md](media/CREDITS.md).
 

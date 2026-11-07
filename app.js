@@ -38,7 +38,12 @@ function renderPage(id) {
   const changed = renderedPage !== page.id;
   renderedPage = page.id;
   const view = document.getElementById("view");
-  view.replaceChildren(page.render());
+  try {
+    view.replaceChildren(page.render());
+  } catch (e) {
+    // A page must never go blank. Show a calm message instead of a broken view.
+    view.replaceChildren(el("div", { class: "page" }, emptyState("This page could not be shown.", "Something in your saved data could not be read. Your practice is safe. Try another page.", el("a", { class: "pill", href: "#/today" }, "Go to Today"))));
+  }
   if (changed) {
     view.classList.remove("page-enter");
     void view.offsetWidth;
@@ -95,6 +100,8 @@ function trackEntry() {
 function route() {
   scrollMemory.set(currentEntry, sheetStack.length ? lockedY : window.scrollY);
   const r = parseRoute(location.hash, renderedPage);
+  // Leaving the welcome page in any way counts as having seen it.
+  if (renderedPage === "welcome" && r.page !== "welcome") markWelcomed();
   if (!r.ok) history.replaceState(history.state, "", `#/${r.page}`);
   const y = trackEntry();
   if (r.page !== renderedPage) {

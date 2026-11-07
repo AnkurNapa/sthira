@@ -39,8 +39,12 @@ function emmaStop() {
   }
 }
 
-/** Speak text in the Emma voice. Returns false if it cannot, true if playback started. */
-function emmaSpeak(text, rate = 1) {
+/**
+ * Speak text in the Emma voice. Returns false if it cannot, true if playback started.
+ * opts.onEnd runs when every sentence has played. opts.onError runs when a clip fails to load or play
+ * (for example offline before the clip was cached), so the caller can fall back to the browser voice.
+ */
+function emmaSpeak(text, rate = 1, opts = {}) {
   if (typeof EMMA_CLIPS === "undefined") return false;
   const keys = emmaSentences(text).map(clipKey);
   if (!keys.length || !keys.every((k) => EMMA_CLIPS.has(k))) return false;
@@ -48,15 +52,25 @@ function emmaSpeak(text, rate = 1) {
   if (!emma.audio) emma.audio = new Audio();
   const token = emma.token;
   emma.queue = keys;
+  const fail = () => {
+    if (token !== emma.token) return;
+    emmaStop();
+    if (opts.onError) opts.onError();
+  };
   const next = () => {
-    if (token !== emma.token || !emma.queue.length) return;
+    if (token !== emma.token) return;
+    if (!emma.queue.length) {
+      if (opts.onEnd) opts.onEnd();
+      return;
+    }
     const k = emma.queue.shift();
     emma.audio.muted = false;
     emma.audio.src = "voice/" + k + ".mp3";
     emma.audio.playbackRate = rate;
     emma.audio.onended = () => setTimeout(next, 180);
+    emma.audio.onerror = fail;
     const p = emma.audio.play();
-    if (p && p.catch) p.catch(() => {});
+    if (p && p.catch) p.catch((err) => { if (!err || err.name !== "AbortError") fail(); });
   };
   next();
   return true;

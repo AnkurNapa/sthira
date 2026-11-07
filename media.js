@@ -33,9 +33,12 @@ const stillMedia = () => reducedMotion.matches || Boolean(navigator.connection &
 function photo(name, opts = {}) {
   const p = PHOTOS[name];
   if (!p) return null;
-  return el("picture", { class: `media ${opts.cls || ""}`.trim() },
-    el("source", { type: "image/webp", srcset: p.webp.map(([f, w]) => `media/${f} ${w}w`).join(", "), sizes: opts.sizes || "(min-width: 1024px) 50vw, 100vw" }),
-    el("img", { src: `media/${p.jpg}`, alt: opts.decorative ? "" : p.alt, width: p.w, height: p.h, loading: opts.eager ? "eager" : "lazy", decoding: "async" }));
+  const img = el("img", { src: `media/${p.jpg}`, alt: opts.decorative ? "" : p.alt, width: p.w, height: p.h, loading: opts.eager ? "eager" : "lazy", decoding: "async" });
+  const pic = el("picture", { class: `media ${opts.cls || ""}`.trim() },
+    el("source", { type: "image/webp", srcset: p.webp.map(([f, w]) => `media/${f} ${w}w`).join(", "), sizes: opts.sizes || "(min-width: 1024px) 50vw, 100vw" }), img);
+  // Offline and not cached: show a calm empty frame, never a broken icon with alt text.
+  img.addEventListener("error", () => pic.classList.add("is-broken"), { once: true });
+  return pic;
 }
 
 /** A muted looping video with its poster. Shows the poster only when motion should stay still. */
