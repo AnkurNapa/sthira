@@ -39,7 +39,7 @@ function welcomeHero() {
       el("h1", { class: "hero-title" }, el("span", {}, "Yoga at home,"), el("span", {}, "made safe.")),
       el("p", { class: "hero-sub" }, "Learn each pose, follow a calm voice and practise at your own pace. Free, with nothing to sign up for."),
       el("div", { class: "hero-actions" }, start, skip),
-      el("p", { class: "hero-note" }, icon("alert", 14), "Sthira does not replace a qualified teacher or medical advice. Stop if anything hurts.")));
+      el("p", { class: "hero-note" }, "Sthira does not replace a qualified teacher or medical advice. Stop if anything hurts.")));
 }
 
 const SAMPLE_RINGS = [

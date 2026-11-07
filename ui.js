@@ -255,7 +255,7 @@ function tile(letter, color, cls = "") {
 }
 
 function cautionBadge(text = "Not in your plan") {
-  return el("span", { class: "badge caution-badge" }, icon("alert", 12), text);
+  return el("span", { class: "badge caution-badge" }, text);
 }
 
 function infoBadge(text) {

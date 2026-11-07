@@ -135,7 +135,7 @@ function showSessionSheet(id, routeKey) {
     sessionHeart(session));
   hero.style.setProperty("--c", session.color);
   const offered = sessionOffered(session, ctx);
-  const note = readPlan() && flat.leftOut.length && offered ? el("p", { class: "note caution-note" }, icon("alert", 16), leftOutNote(flat)) : null;
+  const note = readPlan() && flat.leftOut.length && offered ? el("p", { class: "note caution-note" }, leftOutNote(flat)) : null;
   return openSheet(el("div", { class: "sheet-content" },
     hero, el("p", { class: "lede" }, session.about), note, startButtons(session, flat, offered), phaseList(session, ctx)), { label: session.name, routeKey });
 }
@@ -230,7 +230,7 @@ function showPoseSheet(id, routeKey) {
   const cat = CATEGORIES[pose.cat];
   const reason = planContext().avoid.has(pose.id) ? avoidReason(pose.id, "pose") : "";
   return openSheet(el("div", { class: "sheet-content" },
-    reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}.`),
+    reason && el("p", { class: "note caution-note" }, `Not in your plan because of: ${reason}.`),
     el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
     el("div", { class: "pose-head" },
       el("div", { class: "pose-head-text" }, el("h2", { class: "sheet-title" }, pose.sk), el("p", { class: "sheet-sub" }, pose.en), reviewedLine()),
@@ -295,11 +295,11 @@ function showBreathSheet(id, routeKey) {
       el("p", {}, `This practice is not in your plan, so it cannot be started here. Try ${alternative.name} instead.`),
       el("div", { class: "btn-row" }, el("a", { class: "pill", href: `#/breathe/${alternative.id}` }, `Open ${alternative.name}`)));
   return openSheet(el("div", { class: "sheet-content" },
-    !allowed && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason || "your health answers"}.`),
+    !allowed && el("p", { class: "note caution-note" }, `Not in your plan because of: ${reason || "your health answers"}.`),
     el("h2", { class: "sheet-title" }, breath.name),
     el("p", { class: "sheet-sub" }, `${breath.sk} · ${breathMeta(breath)}`),
     el("p", { class: "lede" }, breath.about),
-    ctx.noHolds && hasHolds && el("p", { class: "note caution-note" }, icon("alert", 16), "Holds are left out for you. The pacer moves straight from in to out."),
+    ctx.noHolds && hasHolds && el("p", { class: "note caution-note" }, "Holds are left out for you. The pacer moves straight from in to out."),
     start,
     infoCard("How", el("ol", { class: "card steps" }, howLines(breath, ctx.noHolds).map((s) => el("li", {}, s)))),
     infoCard("Caution", breath.caution, "caution")), { label: breath.name, routeKey });

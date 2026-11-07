@@ -119,8 +119,8 @@ function resultView(plan, onSee) {
     hero,
     el("p", { class: "muted small" }, DOSHA_NOTE),
     el("div", { class: "dosha-profiles" }, doshaProfiles(plan)),
-    left ? el("p", { class: "note caution-note" }, icon("alert", 16), `${plural(left, "pose")} left out of your plan for your safety.`) : null,
-    plan.health.restOnly ? el("p", { class: "note caution-note" }, icon("alert", 16), "Your plan is rest and breathing only until your doctor clears you.") : null,
+    left ? el("p", { class: "note caution-note" }, `${plural(left, "pose")} left out of your plan for your safety.`) : null,
+    plan.health.restOnly ? el("p", { class: "note caution-note" }, "Your plan is rest and breathing only until your doctor clears you.") : null,
     el("button", { type: "button", class: "pill wide", onclick: onSee }, "See my plan"));
 }
 
@@ -240,7 +240,7 @@ function renderPlan() {
   if (!plan) return planIntro();
   return el("div", { class: "page" },
     pageHead("My Plan", `${doshaName(plan)}.`, `Since ${parseIso(plan.created).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}. ${plural(plan.poses.length, "pose")}. ${plural(plan.breaths.length, "breathing practice")}.`, settingsButton()),
-    plan.health.restOnly && el("p", { class: "banner caution" }, icon("alert", 20), el("span", {}, el("strong", {}, "Rest and breathing only. "), "Get your doctor's clearance before doing poses. Then retake the quiz.")),
+    plan.health.restOnly && el("p", { class: "banner caution" }, el("span", {}, el("strong", {}, "Rest and breathing only. "), "Get your doctor's clearance before doing poses. Then retake the quiz.")),
     el("div", { class: "plan-layout" }, planAside(plan), planMain(plan)));
 }
 

@@ -2,6 +2,11 @@
 
 All notable changes to Sthira. Versions follow docs/RELEASE.md.
 
+## 0.3.4 (7 November 2026)
+
+### Changed
+- The warning triangle is gone from the welcome page and every caution note. Cautions keep their warm colour instead.
+
 ## 0.3.3 (7 November 2026)
 
 ### Safety

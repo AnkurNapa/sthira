@@ -232,7 +232,7 @@ function openBuilder(initial) {
         poseArt(pose.id),
         el("span", { class: "builder-text" }, el("span", { class: "row-title" }, pose.en), el("span", { class: "row-sub" }, `${pose.sk}${pose.sided ? " · each side" : ""}`)),
         stepper(st.b, (b) => { draft = { ...draft, steps: draft.steps.map((x, j) => (j === i ? { ...x, b } : x)) }; dirty = true; paintSummary(); }, pose.en)),
-      reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}. It will be left out when you practise.`),
+      reason && el("p", { class: "note caution-note" }, `Not in your plan because of: ${reason}. It will be left out when you practise.`),
       rowActions(pose.en, i));
   }
 
