@@ -788,13 +788,20 @@ h3 {
 .closing .chapter-title,
 .closing .chapter-sub { margin-left: auto; margin-right: auto; }
 
+/* Copy on top, visual below. Inside a two-up row the tiles share the row
+   lines through subgrid, so both visuals start at the same height. */
 .feature-tile {
-  display: flex;
-  flex-direction: column;
-  min-height: clamp(26rem, 45vw, 34rem);
+  display: grid;
+  grid-template-rows: auto 1fr;
   border-radius: 1.75rem;
   background: var(--surface);
   overflow: hidden;
+}
+
+.two-up > .feature-tile {
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0;
 }
 
 .feature-copy {
@@ -815,8 +822,9 @@ h3 {
 }
 
 .mock {
-  margin: auto clamp(1.25rem, 4vw, 2.75rem) -2.5rem;
-  padding: 1.5rem 1.5rem 3.5rem;
+  align-self: stretch;
+  margin: 0.5rem clamp(1.25rem, 4vw, 2.75rem) 0;
+  padding: 1.5rem 1.5rem 2rem;
   border-radius: 1.5rem 1.5rem 0 0;
   background: #2a2a2d;
   box-shadow: 0 -0.5rem 3rem rgba(0, 0, 0, 0.45);

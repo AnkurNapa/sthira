@@ -2,6 +2,16 @@
 
 All notable changes to Sthira. Versions follow docs/RELEASE.md.
 
+## 0.3.2 (7 November 2026)
+
+### Safety
+- A full content audit against a trainer reference: 29 fixes. Dizziness and low blood pressure now leave out inversions, arm balances and fast breathing. Stronger cautions for Skull Shining Breath, Wood Chopping, Locust, forward folds and more. Downward Dog is left out for shoulder injuries.
+
+### Changed
+- Counter poses added to Morning Wake-Up, Stamina and Flexibility.
+- The 15 Minute Meditation ends with a seated closing.
+- Feature tiles line up their pictures across each row.
+
 ## 0.3.1 (7 November 2026)
 
 ### Added
