@@ -81,7 +81,7 @@ function cleanLog(raw) {
 function migrateStore(raw) {
   const base = {
     schema: SCHEMA, log: {}, sessions: 0, history: [], badges: {}, favPoses: [], favSessions: [],
-    breathsTried: [], stagesDone: [], resume: null, welcomed: false, iosHint: false, settings: cleanSettings(null),
+    breathsTried: [], stagesDone: [], resume: null, welcomed: false, iosHint: false, settings: cleanSettings(null), poseSecs: {},
   };
   if (!isObj(raw)) return base;
   return {
@@ -98,7 +98,14 @@ function migrateStore(raw) {
     welcomed: raw.welcomed === true,
     iosHint: raw.iosHint === true,
     settings: cleanSettings(raw.settings),
+    poseSecs: cleanPoseSecs(raw.poseSecs),
   };
+}
+
+function cleanPoseSecs(raw) {
+  const out = {};
+  if (isObj(raw)) Object.entries(raw).forEach(([id, secs]) => { if (positive(secs)) out[id] = Math.round(positive(secs)); });
+  return out;
 }
 
 let memStore = null;
@@ -190,12 +197,22 @@ function pushHistory(store, item) {
   return [...store.history, { ts: Date.now(), ...item }].slice(-HISTORY_MAX);
 }
 
-/** Save a session. dateKey is the day it started, so a session past midnight counts on its start date. */
-function recordSession({ session, minutes, completed, dateKey }) {
+function addPoseSecs(current, extra) {
+  const out = { ...current };
+  Object.entries(extra || {}).forEach(([id, secs]) => { out[id] = Math.round((out[id] || 0) + secs); });
+  return out;
+}
+
+/**
+ * Save a session. dateKey is the day it started, so a session past midnight counts on its start date.
+ * poses maps pose ids to the seconds spent in them.
+ */
+function recordSession({ session, minutes, completed, dateKey, poses }) {
   const store = readStore();
   if (!(minutes > 0) && !completed) return store;
   const date = dateKey || isoDate(new Date());
   return writeStore({
+    poseSecs: addPoseSecs(store.poseSecs, poses),
     log: addToLog(store, date, "s", Math.max(0, minutes)),
     sessions: store.sessions + (completed ? 1 : 0),
     history: pushHistory(store, { date, kind: "session", id: session.id, title: session.name, min: round1(minutes), done: Boolean(completed) }),
@@ -594,7 +611,7 @@ function findSession(id) {
 
 /* Routes. Pure so tests.js can check them. Pages: #/today, #/sessions/<id> and so on. */
 
-const PAGE_IDS = ["today", "plan", "sessions", "create", "poses", "breathe", "learn"];
+const PAGE_IDS = ["today", "plan", "progress", "sessions", "create", "poses", "breathe", "learn", "about", "welcome", "credits"];
 const hasKey = (map) => (id) => Object.prototype.hasOwnProperty.call(map, id);
 const ROUTE_FINDERS = {
   sessions: (id) => Boolean(findSession(id)),

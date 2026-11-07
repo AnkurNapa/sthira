@@ -63,7 +63,9 @@ function chapterTitle(text, sub) {
 
 function heroSection(now) {
   const stat = (num, label) => el("li", {}, el("span", { class: "stat-num" }, num), el("span", { class: "stat-label" }, label));
-  return band("band-dark hero",
+  const media = el("div", { class: "hero-media", "aria-hidden": "true" }, loopVideo("hero-sunrise-silhouette", { eager: true, decorative: true }), el("div", { class: "hero-shade" }));
+  return band("band-dark hero has-media",
+    media,
     el("p", { class: "hero-eyebrow" }, greeting(now.getHours())),
     el("h1", { class: "hero-title" }, el("span", {}, "Steady body."), el("span", {}, "Easy breath.")),
     el("p", { class: "hero-sub" }, "Guided yoga for your home practice. Learn each pose safely. Then follow along at your own pace."),
@@ -183,7 +185,9 @@ function safetyChapter() {
     chapterTitle("Practise safely at home.", "Sthira is built around the mistakes that cause injury. You see them before you move."),
     el("div", { class: "two-up" },
       featureTile("Every pose shows the risks.", "Clear steps. The common mistakes to avoid. An easier version. Who should skip it.", avoidMock()),
-      featureTile("Follow along, hands free.", "A calm voice reads each step. A ring counts down every hold. Your screen stays awake.", ringMock())));
+      featureTile("Follow along, hands free.", "A calm voice reads each step. A ring counts down every hold. Your screen stays awake.", ringMock())),
+    el("figure", { class: "photo-tile wide" }, photo("photo-senior-lunge-with-block", { sizes: "(min-width: 1200px) 1200px, 100vw" }),
+      el("figcaption", {}, "A block, a cushion and a wall make most poses safer at any age.")));
 }
 
 /* 5. Plan chapter */
@@ -209,6 +213,7 @@ function planChapter() {
     el("div", { class: "two-up" },
       featureTile("Your dosha, your style.", "The traditional Ayurvedic types guide how you practise. Grounding, cooling or energising.", doshaMock()),
       featureTile("A six month journey.", "Four stages from first shapes to your own practice. Each with clear milestones.", journeyMock())),
+    el("div", { class: "photo-tile wide video-tile" }, loopVideo("practice-deck-by-sea")),
     el("div", { class: "shelf", role: "list", "aria-label": "Sessions" }, promotableSessions().map((s) => el("div", { role: "listitem" }, sessionTile(s, "portrait")))));
 }
 
@@ -226,7 +231,9 @@ function poseChapter() {
       card.style.setProperty("--c", cat.color);
       return el("div", { role: "listitem" }, card);
     })),
-    el("div", { class: "pod" }, el("h3", { class: "block-title" }, "Pose of the day"), poseCard(poseOfDay())));
+    el("div", { class: "pod-row" },
+      el("div", { class: "pod" }, el("h3", { class: "block-title" }, "Pose of the day"), poseCard(poseOfDay())),
+      el("div", { class: "photo-tile tall" }, photo("photo-tree-pose-by-window", { sizes: "(min-width: 834px) 40vw, 100vw" }))));
 }
 
 /* 7. Breathing band */
@@ -234,7 +241,7 @@ function poseChapter() {
 function breathBand() {
   return band("band-white",
     el("div", { class: "breath-band" },
-      el("div", { class: "breath-band-visual", "aria-hidden": "true" }, pacerPreview("big")),
+      el("div", { class: "breath-band-visual" }, photo("photo-seated-breathing-wicker-chair", { sizes: "(min-width: 834px) 50vw, 100vw" }), pacerPreview("over")),
       el("div", { class: "breath-band-copy" },
         el("h2", { class: "chapter-title" }, "Breathe your way to calm."),
         el("p", { class: "chapter-sub" }, "Seven guided practices with a circle that paces every breath. One minute is enough to feel the change."),
@@ -297,5 +304,6 @@ function renderToday() {
     breathBand(),
     safetyTeaser(),
     closingStrip(now),
+    teacherBand(),
     faqSection());
 }

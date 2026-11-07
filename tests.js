@@ -10,7 +10,7 @@ const assert = require("assert");
 function sandbox(storage) {
   const ctx = vm.createContext({ console, Date, Math, JSON, Set, Map, Object, Array, Number, String, Boolean, RegExp });
   if (storage) ctx.localStorage = storage;
-  ["data.js", "plan.js", "generator.js", "core.js"].forEach((f) => {
+  ["data.js", "plan.js", "generator.js", "core.js", "stats.js"].forEach((f) => {
     vm.runInContext(fs.readFileSync(path.join(__dirname, f), "utf8"), ctx, { filename: f });
   });
   // Clone results out of the sandbox so deep equality does not trip on realm differences.
@@ -235,6 +235,108 @@ test("figure list in ui.js matches the files in figures/", () => {
   sun.forEach((id) => assert.ok(listed.includes(id), id));
   const missing = run("POSES.map((p) => p.id)").filter((id) => !listed.includes(id));
   assert.ok(missing.length < 20, `poses without a figure use the tile: ${missing.join(" ")}`);
+});
+
+test("media.js agrees with media/manifest.json and every name used exists", () => {
+  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "media", "manifest.json"), "utf8"));
+  const src = fs.readFileSync(path.join(__dirname, "media.js"), "utf8");
+  const ctx = vm.createContext({});
+  vm.runInContext(src.split("// Save-Data")[0] + "; this.P = PHOTOS; this.V = VIDEOS;", ctx);
+  const files = new Set(manifest.map((m) => m.file));
+  Object.values(ctx.P).forEach((p) => {
+    assert.ok(files.has(p.jpg), p.jpg);
+    p.webp.forEach(([f]) => assert.ok(files.has(f), f));
+    assert.ok(p.alt.length > 10 && p.w > 0 && p.h > 0);
+  });
+  Object.keys(ctx.V).forEach((v) => ["mp4", "webm"].forEach((ext) => assert.ok(files.has(`${v}.${ext}`), v)));
+  const code = ["today.js", "views.js", "welcome.js"].map((f) => fs.readFileSync(path.join(__dirname, f), "utf8")).join("\n");
+  const used = [...code.matchAll(/photo\("(photo-[a-z-]+)"|^\s+\w+: "(photo-[a-z-]+)",$/gm)].map((m) => m[1] || m[2]);
+  assert.ok(used.length >= 10, `found ${used.length} photo uses`);
+  used.forEach((name) => assert.ok(ctx.P[name], `missing photo ${name}`));
+  assert.ok(!code.includes("breathing-closeup"), "breathing-closeup must not be used");
+});
+
+function seeded(storage) {
+  const run = sandbox(storage || memoryStorage());
+  run(`writeStore({ log: {
+    "2026-10-27": { s: 20, b: 0 }, "2026-10-31": { s: 0, b: 5 },
+    "2026-11-02": { s: 10, b: 2 }, "2026-11-03": { s: 30, b: 0 }, "2026-11-07": { s: 15, b: 3 },
+    "2025-12-31": { s: 9, b: 0 } },
+    history: [
+      { ts: 1, date: "2026-10-27", kind: "session", id: "morning", title: "Morning Wake-Up", min: 20, done: true },
+      { ts: 2, date: "2026-11-03", kind: "session", id: "morning", title: "Morning Wake-Up", min: 30, done: true },
+      { ts: 3, date: "2026-11-07", kind: "session", id: "my-abc", title: "My flow", min: 15, done: false },
+      { ts: 4, date: "2026-11-07", kind: "breath", id: "nadi", title: "Alternate Nostril", min: 3, done: true } ] })`);
+  return run;
+}
+
+test("period totals and the change against the previous period", () => {
+  const run = seeded();
+  const today = "new Date(2026, 10, 7, 21)";
+  assert.deepStrictEqual(run(`periodRange("week", ${today})`), { from: "2026-11-02", to: "2026-11-08" });
+  assert.deepStrictEqual(run(`periodRange("month", ${today}, -1)`), { from: "2026-10-01", to: "2026-10-31" });
+  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today})`), { minutes: 60, breath: 5, sessions: 1, days: 3 });
+  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today}, -1)`), { minutes: 25, breath: 5, sessions: 1, days: 2 });
+  assert.strictEqual(run(`changeText(60, 25, "week", "minutes")`), "35 minutes more than this time last week");
+  assert.strictEqual(run(`changeText(1, 3, "month", "sessions")`), "2 sessions fewer than this time last month");
+  assert.strictEqual(run(`periodTotals(readStore(), "month", new Date(2026, 10, 2), -1, true).minutes`), 0);
+  assert.strictEqual(run(`periodTotals(readStore(), "month", new Date(2026, 10, 30), -1, true).minutes`), 20);
+  assert.strictEqual(run(`changeText(4, 4, "year", "days")`), "Same as this time last year");
+  assert.strictEqual(run(`periodTotals(readStore(), "year", ${today}, -1).minutes`), 9);
+  assert.strictEqual(run(`periodBars(readStore(), "month", ${today}).length`), 30);
+  assert.strictEqual(run(`periodBars(readStore(), "year", ${today})[10].s`), 55);
+});
+
+test("heatmap buckets local dates across midnight and month ends", () => {
+  const run = seeded();
+  const weeks = run("heatmapWeeks(readStore(), new Date(2026, 10, 7, 23, 59))");
+  assert.strictEqual(weeks.length, 12);
+  const cells = weeks.flat();
+  assert.strictEqual(cells[cells.length - 1].key, "2026-11-08");
+  assert.ok(cells[cells.length - 1].future);
+  assert.strictEqual(cells.find((c) => c.key === "2026-10-31").minutes, 5);
+  assert.strictEqual(cells.find((c) => c.key === "2026-11-07").minutes, 18);
+  assert.ok(!cells.find((c) => c.key === "2026-11-07").future);
+  const keys = cells.map((c) => c.key);
+  assert.strictEqual(new Set(keys).size, 84);
+  assert.ok(keys.includes("2026-10-31") && keys.includes("2026-11-01"));
+  const jan = run("heatmapWeeks(readStore(), new Date(2026, 0, 1, 0, 5)).flat().map((c) => c.key)");
+  assert.ok(jan.includes("2025-12-31") && jan.includes("2026-01-01"));
+});
+
+test("best streak, most practised and history kinds", () => {
+  const run = seeded();
+  assert.strictEqual(run("bestStreak(readStore().log)"), 2);
+  const most = run("practiceMost(readStore())");
+  assert.strictEqual(most.sessions[0].id, "morning");
+  assert.strictEqual(most.sessions[0].count, 2);
+  assert.strictEqual(most.breaths[0].id, "nadi");
+  assert.deepStrictEqual(run("readStore().history.map(historyKind)"), ["sessions", "sessions", "flows", "breathing"]);
+});
+
+test("import validates the file and merges without double counting", () => {
+  const run = seeded();
+  assert.strictEqual(run(`importData("{nope").ok`), false);
+  assert.strictEqual(run(`importData({ app: "other", store: {} }).ok`), false);
+  assert.strictEqual(run(`importData({ app: "sthira", version: 99, store: {} }).ok`), false);
+  const exported = run("exportData()");
+  const res = run(`importData(${JSON.stringify(JSON.stringify(exported))})`);
+  assert.ok(res.ok, res.message);
+  assert.strictEqual(run(`readStore().log["2026-11-03"].s`), 30);
+  assert.strictEqual(run("readStore().history.length"), 4);
+  const other = { app: "sthira", version: 1, store: { log: { "2026-11-05": { s: 12, b: 0 } }, history: [{ ts: 9, date: "2026-11-05", kind: "session", id: "desk", title: "Desk Relief", min: 12, done: true }], poseSecs: { tadasana: 40 } }, flows: [{ id: "my-x", name: "X", steps: ["S", { p: "tadasana", b: 5 }] }] };
+  assert.ok(run(`importData(${JSON.stringify(other)})`).ok);
+  assert.strictEqual(run(`readStore().log["2026-11-05"].s`), 12);
+  assert.strictEqual(run("readStore().history.length"), 5);
+  assert.strictEqual(run("readFlows().length"), 1);
+  assert.strictEqual(run("readStore().poseSecs.tadasana"), 40);
+});
+
+test("pose seconds add up across sessions", () => {
+  const run = sandbox(memoryStorage());
+  run(`recordSession({ session: SESSION_BY_ID.desk, minutes: 5, completed: true, poses: { tadasana: 35.4 } })`);
+  run(`recordSession({ session: SESSION_BY_ID.desk, minutes: 5, completed: true, poses: { tadasana: 20 } })`);
+  assert.strictEqual(run("readStore().poseSecs.tadasana"), 55);
 });
 
 let failed = 0;

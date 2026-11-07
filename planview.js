@@ -292,6 +292,7 @@ function openSettings() {
     offline && el("p", { class: "muted small" }, "Available offline."),
     el("div", { class: "btn-row" },
       el("a", { class: "pill pill-ghost", href: "#/quiz", onclick: () => sheet.close(true) }, "Retake quiz"),
+      el("a", { class: "pill pill-ghost", href: "#/welcome", onclick: () => sheet.close(true) }, "Show the welcome again"),
       el("button", { type: "button", class: "pill pill-danger", onclick: () => {
         if (!window.confirm("Reset all data? This removes your plan, history and badges from this browser.")) return;
         resetAll();

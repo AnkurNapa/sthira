@@ -599,6 +599,18 @@ const SURYA = [
   ["Pranamasana", "Prayer pose", "Exhale. Palms together at the chest."],
 ];
 
+// Opening and closing rituals added to guided sessions and generated flows.
+const OPEN_STEP = {
+  t: "Opening",
+  say: "Sit tall and close your eyes. Notice how your body feels today. If anything hurts, choose the easier version of each pose. Set a simple intention for this practice. Take three slow breaths. If you like, chant Om three times.",
+  s: 60,
+};
+const CLOSE_STEP = {
+  t: "Closing",
+  say: "Roll to your right side. Come up slowly to a comfortable seat. Bring the palms together at the chest. If you like, chant with me. Lokah samastah sukhino bhavantu. Om shanti shanti shanti. May all beings be happy and free. Thank yourself for practising today.",
+  s: 45,
+};
+
 // A session is a list. A string starts a new phase. Steps:
 // { p: pose id, b: breaths } or { t: title, say: cue, s: seconds } or { sun: rounds }.
 const SESSIONS = [
@@ -606,58 +618,68 @@ const SESSIONS = [
     id: "morning", name: "Morning Wake-Up", lvl: 1, focus: "Gentle full body", color: "#FF9F0A",
     about: "A short beginner practice to wake up the spine and the legs. Ideal as your very first session.",
     steps: [
+      "Opening", OPEN_STEP,
       "Centring", { p: "sukhasana", b: 8 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "vyaghrasana", b: 4 }, { p: "shashankasana", b: 5 },
       "Sun salutation", { sun: 3 },
       "Poses", { p: "tadasana", b: 4 }, { p: "vrikshasana", b: 5 }, { p: "utkatasana", b: 5 }, { p: "uttanasana", b: 5 }, { p: "bhujangasana", b: 4 }, { p: "setu-bandha", b: 5 }, { p: "jathara-parivartanasana", b: 5 },
       "Breathing", { t: "Yogic breathing", say: "Sit comfortably. Breathe in through the nose, filling the belly, then the ribs, then the chest. Breathe out slowly in the reverse order.", s: 90 },
       "Relaxation", { p: "savasana", b: 25 },
+      "Closing", CLOSE_STEP,
     ],
   },
   {
     id: "flexibility", name: "Flexibility Flow", lvl: 2, focus: "Hips and hamstrings", color: "#30B0C7",
     about: "Long holds that open the hips, hamstrings and side body. Move to your edge, never past it.",
     steps: [
+      "Opening", OPEN_STEP,
       "Centring", { p: "sukhasana", b: 8 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "ardha-kati-chakrasana", b: 4 }, { p: "malasana", b: 6 },
       "Sun salutation", { sun: 5 },
       "Poses", { p: "trikonasana", b: 8 }, { p: "parsvakonasana", b: 8 }, { p: "prasarita", b: 8 }, { p: "gomukhasana", b: 6 }, { p: "janu-sirsasana", b: 8 }, { p: "baddha-konasana", b: 10 }, { p: "paschimottanasana", b: 10 }, { p: "supta-padangusthasana", b: 8 }, { p: "ananda-balasana", b: 8 },
       "Breathing", { t: "Alternate nostril breathing", say: "Sit tall. Close the right nostril with the thumb. Breathe in through the left. Close the left. Breathe out through the right. Breathe in through the right. Switch and breathe out through the left. Keep going at an easy pace.", s: 180 },
       "Relaxation", { p: "savasana", b: 40 },
+      "Closing", CLOSE_STEP,
     ],
   },
   {
     id: "strength", name: "Strength and Core", lvl: 2, focus: "Legs, core and back", color: "#FF453A",
     about: "Builds the muscles that protect your back and knees. Keep breathing through every hold.",
     steps: [
+      "Opening", OPEN_STEP,
       "Centring", { p: "vajrasana", b: 6 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "vyaghrasana", b: 5 }, { p: "phalakasana", b: 4 },
       "Sun salutation", { sun: 5 },
       "Poses", { p: "utkatasana", b: 8 }, { p: "virabhadrasana1", b: 6 }, { p: "virabhadrasana3", b: 4 }, { p: "phalakasana", b: 6 }, { p: "vasisthasana", b: 4 }, { p: "navasana", b: 6 }, { p: "shalabhasana", b: 5 }, { p: "setu-bandha", b: 8 }, { p: "pawanmuktasana", b: 6 },
       "Breathing", { t: "Bee breath", say: "Sit tall. Close the eyes. Breathe in through the nose. As you breathe out, make a soft humming sound like a bee. Feel the vibration in the head.", s: 90 },
       "Relaxation", { p: "savasana", b: 35 },
+      "Closing", CLOSE_STEP,
     ],
   },
   {
     id: "stamina", name: "Stamina and Endurance", lvl: 2, focus: "Heat and breath", color: "#FF375F",
     about: "More sun salutations and standing work to build stamina. Rest in Child's Pose whenever you need.",
     steps: [
+      "Opening", OPEN_STEP,
       "Centring", { p: "sukhasana", b: 6 },
       "Warm-up", { p: "marjari", b: 8 }, { p: "vyaghrasana", b: 5 }, { p: "malasana", b: 5 },
       "Sun salutation", { sun: 8 },
       "Poses", { p: "utkatasana", b: 8 }, { p: "virabhadrasana2", b: 8 }, { p: "viparita-virabhadrasana", b: 5 }, { p: "ardha-chandrasana", b: 5 }, { p: "garudasana", b: 5 }, { p: "upavistha-konasana", b: 8 }, { p: "ardha-matsyendrasana", b: 6 },
       "Breathing", { t: "Alternate nostril breathing", say: "Sit tall. Breathe in through the left nostril. Breathe out through the right. Breathe in through the right. Breathe out through the left. Let the out breath be longer than the in breath.", s: 150 },
       "Relaxation", { p: "savasana", b: 40 },
+      "Closing", CLOSE_STEP,
     ],
   },
   {
     id: "evening", name: "Evening Unwind", lvl: 1, focus: "Calm and sleep", color: "#5E5CE6",
     about: "Slow floor poses to let go of the day. Good two hours or more after dinner, before bed.",
     steps: [
+      "Opening", OPEN_STEP,
       "Centring", { p: "sukhasana", b: 8 },
       "Poses", { p: "marjari", b: 6 }, { p: "shashankasana", b: 8 }, { p: "supta-padangusthasana", b: 6 }, { p: "jathara-parivartanasana", b: 6 }, { p: "ananda-balasana", b: 6 }, { p: "viparita-karani", b: 25 },
       "Breathing", { t: "Bee breath", say: "Breathe in through the nose. Hum softly as you breathe out. Let the sound fade naturally.", s: 90 },
       "Relaxation", { p: "savasana", b: 40 },
+      "Closing", CLOSE_STEP,
     ],
   },
   {
@@ -836,6 +858,48 @@ const ARTICLES = [
       "Keep your mat where you can see it.",
       "On a busy day, do one minute of Belly Breathing. It still counts.",
       "Sthira keeps your streak on this device only. Nothing is sent anywhere.",
+    ],
+  },
+  {
+    id: "rituals", title: "Begin and end your practice", icon: "🪔", sub: "Opening and closing on your own",
+    body: [
+      "A short ritual at the start and the end turns a workout into a practice. It takes about two minutes. Every guided session in Sthira includes both.",
+      "Opening",
+      "* Sit tall on a cushion. Close your eyes.",
+      "* Scan your body from feet to head. Notice anything stiff, sore or injured.",
+      "* Decide now what you will go easy on today. Choose the easier version of any pose that touches that area.",
+      "* Set a simple intention, such as patience or steadiness.",
+      "* Take three slow breaths. If you like, chant Om three times on the out breath.",
+      "Closing",
+      "* After relaxation, roll to your right side. Come up slowly to a seat.",
+      "* Bring the palms together at the chest.",
+      "* If you like, chant the traditional closing: Lokah samastah sukhino bhavantu. Om shanti shanti shanti.",
+      "* It means: may all beings be happy and free. Peace, peace, peace.",
+      "* Notice how you feel compared with when you started.",
+      "Chanting is optional. Sitting quietly for the same few breaths works just as well.",
+    ],
+  },
+  {
+    id: "teaching", title: "Opening and closing a class", icon: "🎓", sub: "For anyone who leads a group",
+    body: [
+      "If you lead friends, family or a group, a clear start and finish keeps everyone safe and settled.",
+      "Before you begin",
+      "* Arrive early. Check the space is clear. Mats should have an arm's length around them.",
+      "* Greet people by name as they arrive.",
+      "Opening the class",
+      "* Introduce yourself and the kind of class you will teach today.",
+      "* Ask who is new. Tell them to move at their own pace and to rest whenever they need.",
+      "* Ask everyone, quietly or by a raised hand, whether they have an injury or condition you should know about. Never offer medical advice. Offer the easier version or rest instead.",
+      "* Lead a minute of centring in a seat. Three Om chants are optional.",
+      "* Let latecomers join quietly after the centring.",
+      "During the class",
+      "* Demonstrate first, then watch the room. Look for the mistakes listed on each pose page.",
+      "* Give the easier version before the harder one.",
+      "* Keep relaxation at the end. Do not rush it.",
+      "Closing the class",
+      "* Lead the closing chant or a few quiet breaths.",
+      "* Thank everyone for coming. Welcome the new people by name.",
+      "* Stay for a minute afterwards. New people often have questions. Let them know that feeling a little sore the next day is normal and eases with regular practice.",
     ],
   },
   {

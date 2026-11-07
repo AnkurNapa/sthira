@@ -5,12 +5,18 @@
 const PAGES = [
   { id: "today", label: "Today", render: () => renderToday() },
   { id: "plan", label: "My Plan", render: () => renderPlan() },
+  { id: "progress", label: "Progress", render: () => renderProgress() },
   { id: "sessions", label: "Sessions", render: () => renderSessions() },
   { id: "create", label: "Create", render: () => renderCreate() },
   { id: "poses", label: "Poses", render: () => renderPoses() },
   { id: "breathe", label: "Breathe", render: () => renderBreathe() },
   { id: "learn", label: "Learn", render: () => renderLearn() },
+  { id: "about", label: "About", render: () => renderAbout() },
+  { id: "welcome", label: "Welcome", render: () => renderWelcome(), nav: false },
+  { id: "credits", label: "Credits", render: () => renderCredits(), nav: false },
 ];
+
+const NAV_PAGES = PAGES.filter((p) => p.nav !== false);
 
 const ROUTE_SHOW = {
   sessions: showSessionSheet,
@@ -112,35 +118,17 @@ function replaceRoute(path) {
   route();
 }
 
-/* Welcome and launch */
+/* First visit */
 
-function openQuizOffer() {
-  const sheet = openSheet(el("div", { class: "sheet-content welcome" },
-    el("h2", { class: "sheet-title" }, "Find your practice"),
-    el("p", {}, "Ten short questions about your body and your health. Sthira builds a plan that fits you. It leaves out the poses that are not safe for you."),
-    el("div", { class: "btn-stack" },
-      el("a", { class: "pill wide", href: "#/quiz", onclick: () => sheet.close(true) }, "Take the 2 minute quiz"),
-      el("button", { type: "button", class: "pill pill-ghost wide", onclick: () => sheet.close(true) }, "Skip for now"))), { label: "Find your practice" });
+/** Send a first time visitor to the welcome page once. Deep links are left alone. */
+function firstVisitRoute() {
+  const bare = !location.hash || location.hash === "#" || location.hash === "#/" || location.hash === "#/today";
+  if (!readStore().welcomed && bare) history.replaceState(history.state, "", "#/welcome");
 }
 
-function maybeWelcome() {
-  if (readStore().welcomed) return;
-  let started = false;
-  const sheet = openSheet(el("div", { class: "sheet-content welcome" },
-    el("img", { class: "welcome-mark", src: "icon.svg", alt: "", width: 72, height: 72 }),
-    el("h2", { class: "sheet-title" }, "Welcome to Sthira"),
-    el("p", {}, "Sthira guides your yoga practice at home. Follow a session, learn each pose step by step or slow down with a breathing exercise."),
-    el("p", {}, "Every pose shows how to avoid injury. It also shows an easier version and who should skip it."),
-    el("div", { class: "card caution" }, el("p", {}, "Sthira does not replace a qualified teacher or medical advice. Stop if anything hurts.")),
-    el("div", { class: "btn-stack" },
-      el("button", { type: "button", class: "pill wide", onclick: () => { started = true; sheet.close(); } }, "Get started"),
-      el("a", { class: "pill pill-ghost wide", href: "#/learn/health" }, "When to check with a doctor"))), {
-    label: "Welcome to Sthira",
-    onClose: () => {
-      writeStore({ welcomed: true });
-      if (started && !readPlan()) setTimeout(openQuizOffer, reducedMotion.matches ? 0 : SHEET_MS);
-    },
-  });
+function fillFooter() {
+  const slot = document.getElementById("footer-teacher");
+  if (slot) slot.textContent = TEACHER.footer;
 }
 
 /* Offline support with an update prompt */
@@ -175,8 +163,9 @@ window.addEventListener("hashchange", route);
 
 document.addEventListener("DOMContentLoaded", () => {
   buildNav();
+  fillFooter();
+  firstVisitRoute();
   route();
   booted = true;
-  maybeWelcome();
   registerWorker();
 });

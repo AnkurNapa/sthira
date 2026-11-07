@@ -1,8 +1,8 @@
 // Sthira offline cache. Bump CACHE_VERSION whenever any site file changes.
-const CACHE_VERSION = "sthira-v1";
+const CACHE_VERSION = "sthira-v2";
 const SITE_FILES = [
-  "./", "index.html", "style.css", "data.js", "plan.js", "generator.js", "core.js", "ui.js", "views.js",
-  "voice/clips.js", "voice.js", "player.js", "today.js", "planview.js", "flows.js", "nav.js", "app.js", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-512.png",
+  "./", "index.html", "style.css", "data.js", "plan.js", "generator.js", "core.js", "stats.js", "ui.js", "media.js", "views.js",
+  "voice/clips.js", "voice.js", "player.js", "today.js", "planview.js", "flows.js", "welcome.js", "progress.js", "nav.js", "app.js", "manifest.webmanifest", "icon.svg", "icon-180.png", "icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
@@ -21,7 +21,7 @@ self.addEventListener("message", (event) => {
 });
 
 // Cache first for speed offline. A new version arrives through a new CACHE_VERSION.
-// Voice clips and pose figures are not precached: each one is saved the first time it loads.
+// Voice clips, pose figures, photos and videos are not precached. Each one is saved the first time it loads.
 function fromNetwork(req) {
   return fetch(req).then((res) => {
     if (res.ok && res.status === 200) {

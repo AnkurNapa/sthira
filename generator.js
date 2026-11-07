@@ -105,7 +105,7 @@ function generateFlow(options) {
   const dosha = plan ? plan.dosha.primary : "p";
   const breaths = DOSHA_BREATHS[dosha] || 5;
   const favour = plan ? plan.poses : [];
-  const total = minutes * 60;
+  const total = Math.max(240, minutes * 60 - OPEN_STEP.s - CLOSE_STEP.s); // the rituals come out of the budget
   const used = new Set(["savasana"]);
   const steps = [];
 
@@ -113,6 +113,7 @@ function generateFlow(options) {
     return restFlow(minutes, breathSecs);
   }
 
+  steps.push("Opening", OPEN_STEP);
   const centre = CENTRING.find(allowed) || "sukhasana";
   steps.push("Centring", { p: centre, b: Math.max(4, Math.round((total * SHAPE[0].share) / breathSecs)) });
   used.add(centre);
@@ -120,7 +121,7 @@ function generateFlow(options) {
   steps.push("Warm-up", ...fillBudget(WARMUPS.filter(allowed).map(poseById), total * SHAPE[1].share, 5, breathSecs, used, allowed));
 
   const sunOk = SUN_STEP_POSES.every((id) => !avoid.has(id));
-  if (sunOk && minutes >= 10) {
+  if (sunOk && minutes > 10) {
     const rounds = Math.max(2, Math.round(((total * SHAPE[2].share) / FLOW_SUN_SECS) * (DOSHA_SUN[dosha] || 1)));
     steps.push("Sun salutation", { sun: rounds });
   }
@@ -131,17 +132,18 @@ function generateFlow(options) {
     const fits = (p) => (standing ? part.cats.includes(p.cat) || STANDING_FOLDS.includes(p.id) : part.cats.includes(p.cat) && !STANDING_FOLDS.includes(p.id));
     const pool = POSES.filter((p) => fits(p) && allowed(p.id));
     const ranked = rankPoses(pool, focusCats, favour, rand);
-    const share = sunOk && minutes >= 10 ? part.share : part.share + SHAPE[2].share / 2;
+    const share = sunOk && minutes > 10 ? part.share : part.share + SHAPE[2].share / 2;
     const picked = fillBudget(ranked, total * share, breaths, breathSecs, used, allowed);
     if (picked.length) steps.push(part.phase, ...picked);
   });
 
   const breathId = pickBreath(plan, rand);
   const breath = BREATHS.find((b) => b.id === breathId);
-  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(60, Math.round(total * SHAPE[5].share)) });
+  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(minutes > 10 ? 60 : 45, Math.round(total * SHAPE[5].share)) });
 
-  const relax = Math.max(MIN_RELAX_SECS, total * SHAPE[6].share);
+  const relax = Math.max(minutes > 10 ? MIN_RELAX_SECS : 120, total * SHAPE[6].share);
   steps.push("Relaxation", { p: "savasana", b: Math.round(relax / breathSecs) });
+  steps.push("Closing", CLOSE_STEP);
 
   return {
     id: "flow-" + Math.floor(rand() * 1e9).toString(36),
@@ -193,8 +195,9 @@ if (typeof process !== "undefined" && process.env && process.env.STHIRA_CHECK) {
         const flow = generateFlow({ minutes: m, level: lvl, focus: f, seed: "t" + m + f + lvl });
         const secs = sessionSecs(flow);
         assert.ok(secs > m * 60 * 0.75 && secs < m * 60 * 1.3, `${m} ${f} ${lvl} gave ${Math.round(secs / 60)} min`);
-        const last = flow.steps[flow.steps.length - 1];
-        assert.strictEqual(last.p, "savasana", "always ends in relaxation");
+        const poseSteps = flow.steps.filter((s) => s.p);
+        assert.strictEqual(poseSteps[poseSteps.length - 1].p, "savasana", "the last pose is always relaxation");
+        assert.strictEqual(flow.steps[flow.steps.length - 1], CLOSE_STEP, "ends with the closing ritual");
         flow.steps.filter((s) => s.p).forEach((s) => assert.ok(poseById(s.p).lvl <= lvl, `level ${lvl} got ${s.p}`));
       });
     });
