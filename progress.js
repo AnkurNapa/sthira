@@ -32,7 +32,8 @@ function summaryTile(store) {
       ringLegend(rings),
       el("div", { class: "streaks" },
         el("div", {}, el("span", { class: "hero-num" }, String(streak)), el("span", { class: "muted" }, "day streak now")),
-        el("div", {}, el("span", { class: "hero-num small-num" }, String(bestStreak(store.log))), el("span", { class: "muted" }, "best streak")))));
+        el("div", {}, el("span", { class: "hero-num small-num" }, String(bestStreak(store.log))), el("span", { class: "muted" }, "best streak")))),
+    el("p", { class: "balance-line" }, balanceLine(weekStats(store.log))));
 }
 
 /* 2. Period totals */
@@ -57,8 +58,10 @@ function periodTile(store) {
     el("div", { class: "period-head" }, el("h2", { class: "tile-title" }, `This ${p}`), periodSwitch()),
     el("div", { class: "stat-grid" },
       statTile("Total minutes", now.minutes, changeText(now.minutes, before.minutes, p, "minutes")),
+      statTile("A · Asana minutes", now.a, changeText(now.a, before.a, p, "minutes")),
+      statTile("P · Pranayama minutes", now.p, changeText(now.p, before.p, p, "minutes")),
+      statTile("M · Meditation minutes", now.m, changeText(now.m, before.m, p, "minutes")),
       statTile("Sessions finished", now.sessions, changeText(now.sessions, before.sessions, p, "sessions")),
-      statTile("Breathing minutes", now.breath, changeText(now.breath, before.breath, p, "minutes")),
       statTile("Active days", now.days, changeText(now.days, before.days, p, "days"))));
 }
 
@@ -74,6 +77,20 @@ function columnPath(x, y, w, h, roundTop) {
   if (h <= 0) return "";
   const r = roundTop ? Math.min(BAR_RADIUS, h, w / 2) : 0;
   return `M${x},${y + h}V${y + r}${r ? `Q${x},${y} ${x + r},${y}` : ""}H${x + w - r}${r ? `Q${x + w},${y} ${x + w},${y + r}` : ""}V${y + h}Z`;
+}
+
+const barTotal = (b) => APM_KEYS.reduce((sum, k) => sum + (b[k] || 0), 0);
+
+/** Stack asana, pranayama, meditation and rest from the baseline with a 2px gap. Only the top end is rounded. */
+function stackSegments(g, b, x, barW, y) {
+  const keys = APM_KEYS.filter((k) => b[k] > 0);
+  let base = 0;
+  keys.forEach((k, i) => {
+    const top = y(base + b[k]);
+    const bottom = y(base) - (i > 0 ? BAR_GAP : 0);
+    g.append(svgEl("path", { d: columnPath(x, top, barW, bottom - top, i === keys.length - 1), class: `seg-${k}` }));
+    base += b[k];
+  });
 }
 
 function barLabel(bar) {
@@ -93,7 +110,7 @@ function drawBars(host, bars, goal) {
   const width = Math.max(260, host.clientWidth);
   const plotW = width - CHART_PAD.left - CHART_PAD.right;
   const plotH = CHART_H - CHART_PAD.top - CHART_PAD.bottom;
-  const max = niceMax(Math.max(goal, ...bars.map((b) => b.s + b.b), 1));
+  const max = niceMax(Math.max(goal, ...bars.map(barTotal), 1));
   const y = (v) => CHART_PAD.top + plotH - (v / max) * plotH;
   const band = plotW / bars.length;
   const barW = Math.min(BAR_MAX, Math.max(3, band * 0.62));
@@ -108,16 +125,10 @@ function drawBars(host, bars, goal) {
   const tip = host.querySelector(".chart-tip");
   bars.forEach((b, i) => {
     const x = CHART_PAD.left + band * i + (band - barW) / 2;
-    const g = svgEl("g", { class: "bar", tabindex: "0", role: "img", "aria-label": `${barLabel(b)}: ${b.s} session minutes, ${b.b} breathing minutes` });
+    const text = `${barLabel(b)}. ${APM_KEYS.map((k) => `${APM_INFO[k].name} ${minutesText(b[k])}`).join(". ")}.`;
+    const g = svgEl("g", { class: "bar", tabindex: "0", role: "img", "aria-label": text });
     g.append(svgEl("rect", { x: CHART_PAD.left + band * i, y: CHART_PAD.top, width: band, height: plotH, class: "hit" }));
-    const sTop = y(b.s);
-    g.append(svgEl("path", { d: columnPath(x, sTop, barW, y(0) - sTop, b.b === 0), class: "seg-s" }));
-    if (b.b > 0) {
-      const bTop = y(b.s + b.b);
-      const gap = b.s > 0 ? BAR_GAP : 0;
-      g.append(svgEl("path", { d: columnPath(x, bTop, barW, sTop - bTop - gap, true), class: "seg-b" }));
-    }
-    const text = `${barLabel(b)}. Sessions ${minutesText(b.s)}. Breathing ${minutesText(b.b)}.`;
+    stackSegments(g, b, x, barW, y);
     ["pointerenter", "focus"].forEach((ev) => g.addEventListener(ev, () => showTip(tip, host, g, text)));
     ["pointerleave", "blur"].forEach((ev) => g.addEventListener(ev, () => { tip.hidden = true; }));
     svg.append(g);
@@ -139,14 +150,13 @@ function drawBars(host, bars, goal) {
 function chartTable(bars) {
   return el("table", { class: "visually-hidden" },
     el("caption", {}, "Minutes practised"),
-    el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "When"), el("th", { scope: "col" }, "Session minutes"), el("th", { scope: "col" }, "Breathing minutes"))),
-    el("tbody", {}, bars.map((b) => el("tr", {}, el("th", { scope: "row" }, barLabel(b)), el("td", {}, String(b.s)), el("td", {}, String(b.b))))));
+    el("thead", {}, el("tr", {}, el("th", { scope: "col" }, "When"), APM_KEYS.map((k) => el("th", { scope: "col" }, `${APM_INFO[k].name} minutes`)))),
+    el("tbody", {}, bars.map((b) => el("tr", {}, el("th", { scope: "row" }, barLabel(b)), APM_KEYS.map((k) => el("td", {}, String(b[k])))))));
 }
 
 function legend() {
   return el("ul", { class: "chart-legend", role: "list" },
-    el("li", {}, el("span", { class: "swatch s" }), "Sessions"),
-    el("li", {}, el("span", { class: "swatch b" }), "Breathing"),
+    APM_KEYS.map((k) => el("li", {}, el("span", { class: `swatch ${k}` }), k === "r" ? "Rest and closing" : `${APM_INFO[k].letter} · ${APM_INFO[k].name}`)),
     el("li", {}, el("span", { class: "swatch goal-key" }), "Goal"));
 }
 

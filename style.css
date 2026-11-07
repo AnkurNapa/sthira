@@ -20,11 +20,19 @@
   --caution-ink: #8f3700;
   --caution-bg: #fff2e0;
   --caution-line: #ff9500;
-  --ring-1: #f2602e;
-  --ring-2: #1fa2bd;
-  --ring-3: #49b33a;
+  --ring-1: var(--apm-a);
+  --ring-2: var(--apm-p);
+  --ring-3: var(--apm-m);
   --chart-s: #c8571f;
   --chart-b: #0090c0;
+  --apm-a: #c8571f;
+  --apm-p: #0090c0;
+  --apm-m: #7b5cd6;
+  --apm-r: #8e8e93;
+  --apm-a-soft: rgba(200, 87, 31, 0.3);
+  --apm-p-soft: rgba(0, 144, 192, 0.3);
+  --apm-m-soft: rgba(123, 92, 214, 0.3);
+  --apm-r-soft: rgba(142, 142, 147, 0.3);
   --heat-0: #e8e8ed;
   --heat-1: #f6cdb4;
   --heat-2: #efa27a;
@@ -57,11 +65,19 @@
     --caution-bg: rgba(255, 159, 10, 0.14);
     --nav-bg: rgba(0, 0, 0, 0.82);
     --subnav-bg: rgba(22, 22, 23, 0.78);
-    --ring-1: #ff6b3d;
-    --ring-2: #3cc8e3;
-    --ring-3: #7dd35f;
+    --ring-1: var(--apm-a);
+    --ring-2: var(--apm-p);
+    --ring-3: var(--apm-m);
     --chart-s: #e06a30;
     --chart-b: #1d98c8;
+    --apm-a: #e06a30;
+    --apm-p: #1d98c8;
+    --apm-m: #8a6be0;
+    --apm-r: #6e6e73;
+    --apm-a-soft: rgba(224, 106, 48, 0.32);
+    --apm-p-soft: rgba(29, 152, 200, 0.32);
+    --apm-m-soft: rgba(138, 107, 224, 0.32);
+    --apm-r-soft: rgba(110, 110, 115, 0.32);
     --heat-0: #2c2c2e;
     --heat-1: #5a3320;
     --heat-2: #8a4523;
@@ -1638,6 +1654,7 @@ ul.card li + li { margin-top: 0.5rem; }
 .reading .prose li { font-size: 1.1875rem; line-height: 1.6; }
 
 .prose ul { padding-left: 1.5rem; }
+.prose .article-subhead { margin: 2rem 0 0.25rem; font-size: 1.375rem; font-weight: 600; letter-spacing: -0.01em; }
 
 .welcome { text-align: left; }
 .welcome-mark { width: 4.5rem; height: 4.5rem; margin-top: 0.5rem; border-radius: 1rem; }
@@ -2330,13 +2347,20 @@ button.toast { cursor: pointer; }
 .pose-art-lg { width: 3.75rem; height: 3.75rem; border-radius: 0.875rem; }
 .pose-art-xl { width: min(13.75rem, 60vw); height: auto; aspect-ratio: 1; border-radius: 1.5rem; }
 .pose-art-player { width: min(12.5rem, 40vh); height: auto; aspect-ratio: 1; border-radius: 1.5rem; }
-.band-dark .pose-art,
-.dark .pose-art,
-.mock .pose-art { filter: invert(1) hue-rotate(180deg); }
+.band-dark .pose-fig,
+.dark .pose-fig,
+.mock .pose-fig { filter: invert(1) hue-rotate(180deg); }
 
 @media (prefers-color-scheme: dark) {
-  .pose-art { filter: invert(1) hue-rotate(180deg); }
+  .pose-fig { filter: invert(1) hue-rotate(180deg); }
 }
+
+/* Photos sit in the same rounded frame as figures. They are never inverted. */
+.pose-photo { display: block; overflow: hidden; background: var(--surface); }
+.pose-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pose-art-xl.pose-photo,
+.pose-art-player.pose-photo { width: min(22rem, 80vw); aspect-ratio: 4 / 3; height: auto; }
+.player-visual .pose-art-player.pose-photo { width: min(16rem, 44vw, 34vh); aspect-ratio: 4 / 3; }
 
 .pose-figure { display: flex; justify-content: center; margin: 0.5rem 0 1rem; }
 
@@ -2782,6 +2806,52 @@ button.toast { cursor: pointer; }
   .bento-tile.wide { grid-column: 1 / -1; }
 }
 
+/* APM: asana, pranayama, meditation */
+
+.apm-a { --apm: var(--apm-a); }
+.apm-p { --apm: var(--apm-p); }
+.apm-m { --apm: var(--apm-m); }
+.apm-r { --apm: var(--apm-r); }
+
+.apm-letter {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.375rem;
+  border-radius: 0.3125rem;
+  background: var(--apm);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  vertical-align: 0.0625rem;
+}
+
+.apm-bar { display: inline-flex; flex-direction: column; gap: 0.25rem; width: 100%; max-width: 14rem; }
+.apm-track { display: flex; gap: 2px; height: 0.375rem; }
+.apm-seg { min-width: 0.25rem; border-radius: 980px; background: var(--apm); }
+.apm-key { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.02em; }
+.session-tile .apm-bar { margin-top: 0.5rem; }
+.session-tile .apm-track { padding: 2px; border-radius: 980px; background: rgba(255, 255, 255, 0.85); height: calc(0.375rem + 4px); }
+.session-hero .apm-bar { margin-top: 0.75rem; }
+.session-hero .apm-track { padding: 2px; border-radius: 980px; background: rgba(255, 255, 255, 0.85); height: calc(0.375rem + 4px); }
+.apm-progress { position: relative; height: 0.375rem; }
+.apm-progress .progress-fill { width: 100%; transition: clip-path 0.25s linear; }
+.balance-line { margin: 1rem 0 0; color: var(--text-2); }
+.apm-note { margin: 0.5rem 0 0; color: var(--text-2); font-size: 0.9375rem; }
+.create-panel .segmented { display: flex; flex-wrap: wrap; border-radius: 1.375rem; }
+.create-panel .segmented button { flex: 1 1 auto; }
+.flow-preview .apm-bar { max-width: 20rem; margin: 0 0 1rem; }
+.seg-a { fill: var(--apm-a); }
+.seg-p { fill: var(--apm-p); }
+.seg-m { fill: var(--apm-m); }
+.seg-r { fill: var(--apm-r); }
+.swatch.a { background: var(--apm-a); }
+.swatch.p { background: var(--apm-p); }
+.swatch.m { background: var(--apm-m); }
+.swatch.r { background: var(--apm-r); }
+
 /* Footer */
 
 .site-footer {
@@ -2865,6 +2935,7 @@ button.toast { cursor: pointer; }
   .pacer-stage { width: min(56vh, 28rem); }
   .player-visual .pose-art-player,
   .player-visual.has-art .ring-wrap { width: min(20rem, 36vh); }
+  .player-visual .pose-art-player.pose-photo { width: min(28rem, 48vh); }
   .player-controls { gap: 3rem; }
 }
 

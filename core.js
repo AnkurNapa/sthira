@@ -6,7 +6,7 @@ const STORE_KEY = "sthira.v1";
 const PLAN_KEY = "sthira.plan";
 const FLOWS_KEY = "sthira.flows";
 const TODAY_FLOW_ID = "today-flow";
-const SCHEMA = 2;
+const SCHEMA = 3;
 const LEVELS = { 1: "Beginner", 2: "Intermediate", 3: "Advanced" };
 const POSE_BY_ID = Object.fromEntries(POSES.map((p) => [p.id, p]));
 const BREATH_BY_ID = Object.fromEntries(BREATHS.map((b) => [b.id, b]));
@@ -20,7 +20,34 @@ const SUN_POSE_IDS = ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha"]
 const MOVE_PHASES = ["Warm-up", "Sun salutation", "Poses", "Seated", "Standing"];
 const RESUME_MS = 12 * 60 * 60 * 1000;
 const HISTORY_MAX = 200;
-const DEFAULT_SETTINGS = { voice: true, rate: 0.9, chime: true, breathSecs: BREATH_SECS, weeklyGoal: 0 };
+const DEFAULT_SETTINGS = { voice: true, rate: 0.9, chime: true, breathSecs: BREATH_SECS, weeklyGoal: 0, apmSplit: [70, 15, 15] };
+
+/* APM: asana, pranayama and meditation. Rest (opening, relaxation, closing) counts in totals only. */
+const APM_KEYS = ["a", "p", "m", "r"];
+const APM_INFO = {
+  a: { letter: "A", name: "Asana" },
+  p: { letter: "P", name: "Pranayama" },
+  m: { letter: "M", name: "Meditation" },
+  r: { letter: "R", name: "Rest" },
+};
+const REST_PHASES = ["Opening", "Relaxation", "Closing"];
+const MEDITATION_SESSIONS = ["nidra", "meditate"];
+const emptyCats = () => ({ a: 0, p: 0, m: 0, r: 0 });
+
+/** The APM category of a step from its phase. Yoga Nidra and the meditation session count as meditation. */
+function phaseCategory(phase, sessionId) {
+  if (REST_PHASES.includes(phase)) return "r";
+  if (MEDITATION_SESSIONS.includes(sessionId)) return "m";
+  if (phase === "Breathing") return "p";
+  if (phase === "Meditation") return "m";
+  return "a";
+}
+
+function cleanSplit(raw) {
+  const nums = Array.isArray(raw) ? raw.map(Number) : [];
+  const ok = nums.length === 3 && nums.every((n) => n >= 0) && Math.round(nums[0] + nums[1] + nums[2]) === 100;
+  return ok ? nums : [...DEFAULT_SETTINGS.apmSplit];
+}
 
 /* Small utilities */
 
@@ -58,7 +85,15 @@ function cleanSettings(raw) {
     rate: clamp(Number(s.rate) || DEFAULT_SETTINGS.rate, 0.6, 1.2),
     breathSecs: clamp(Math.round(Number(s.breathSecs)) || BREATH_SECS, 5, 8),
     weeklyGoal: clamp(Math.round(Number(s.weeklyGoal)) || 0, 0, 1000),
+    apmSplit: cleanSplit(s.apmSplit),
   };
+}
+
+/** One day of the log. Schema 2 stored s (session) and b (breath pacer): s becomes asana, b pranayama. */
+function cleanDay(v) {
+  if (!isObj(v)) return null;
+  if (APM_KEYS.some((k) => k in v)) return { a: positive(v.a), p: positive(v.p), m: positive(v.m), r: positive(v.r) };
+  return { a: positive(v.s), p: positive(v.b), m: 0, r: 0 };
 }
 
 function cleanLog(raw) {
@@ -66,12 +101,13 @@ function cleanLog(raw) {
   const dateKey = /^\d{4}-\d{2}-\d{2}$/;
   if (isObj(raw.log)) {
     Object.entries(raw.log).forEach(([d, v]) => {
-      if (dateKey.test(d) && isObj(v)) log[d] = { s: positive(v.s), b: positive(v.b) };
+      const day = dateKey.test(d) ? cleanDay(v) : null;
+      if (day) log[d] = day;
     });
   } else if (isObj(raw.days)) {
     // Schema 1 stored plain minutes per day.
     Object.entries(raw.days).forEach(([d, v]) => {
-      if (dateKey.test(d)) log[d] = { s: positive(v), b: 0 };
+      if (dateKey.test(d)) log[d] = { a: positive(v), p: 0, m: 0, r: 0 };
     });
   }
   return log;
@@ -163,7 +199,7 @@ function dayNumber(d = new Date()) {
 
 /* Progress */
 
-const dayTotal = (entry) => (entry ? entry.s + entry.b : 0);
+const dayTotal = (entry) => (entry ? APM_KEYS.reduce((sum, k) => sum + (entry[k] || 0), 0) : 0);
 
 function streakDays(log, today = new Date()) {
   let day = dayTotal(log[isoDate(today)]) > 0 ? today : addDays(today, -1);
@@ -175,22 +211,31 @@ function streakDays(log, today = new Date()) {
   return count;
 }
 
+/** Minutes per APM category since Monday, plus the number of days practised. */
 function weekStats(log, today = new Date()) {
   const sinceMonday = (today.getDay() + 6) % 7;
-  const out = { practice: 0, breath: 0, days: 0 };
+  const out = { ...emptyCats(), days: 0 };
   for (let i = 0; i <= sinceMonday; i += 1) {
     const entry = log[isoDate(addDays(today, -i))];
     if (!entry) continue;
-    out.practice += entry.s;
-    out.breath += entry.b;
+    APM_KEYS.forEach((k) => { out[k] += entry[k] || 0; });
     if (dayTotal(entry) > 0) out.days += 1;
   }
-  return { practice: Math.round(out.practice), breath: Math.round(out.breath), days: out.days };
+  APM_KEYS.forEach((k) => { out[k] = Math.round(out[k]); });
+  return out;
 }
 
-function addToLog(store, dateKey, field, minutes) {
-  const prev = store.log[dateKey] || { s: 0, b: 0 };
-  return { ...store.log, [dateKey]: { ...prev, [field]: round1(prev[field] + minutes) } };
+function addToLog(store, dateKey, cats) {
+  const prev = store.log[dateKey] || emptyCats();
+  const next = { ...emptyCats(), ...prev };
+  APM_KEYS.forEach((k) => { next[k] = round1(next[k] + Math.max(0, cats[k] || 0)); });
+  return { ...store.log, [dateKey]: next };
+}
+
+/** Category minutes for a session that recorded none: all of it counts as asana. */
+function catsOrAsana(cats, minutes) {
+  const total = cats ? APM_KEYS.reduce((sum, k) => sum + (cats[k] || 0), 0) : 0;
+  return total > 0 ? { ...emptyCats(), ...cats } : { ...emptyCats(), a: Math.max(0, minutes) };
 }
 
 function pushHistory(store, item) {
@@ -207,15 +252,17 @@ function addPoseSecs(current, extra) {
  * Save a session. dateKey is the day it started, so a session past midnight counts on its start date.
  * poses maps pose ids to the seconds spent in them.
  */
-function recordSession({ session, minutes, completed, dateKey, poses }) {
+function recordSession({ session, minutes, completed, dateKey, poses, cats }) {
   const store = readStore();
   if (!(minutes > 0) && !completed) return store;
   const date = dateKey || isoDate(new Date());
+  const split = catsOrAsana(cats, minutes);
+  const rounded = Object.fromEntries(APM_KEYS.map((k) => [k, round1(split[k])]));
   return writeStore({
     poseSecs: addPoseSecs(store.poseSecs, poses),
-    log: addToLog(store, date, "s", Math.max(0, minutes)),
+    log: addToLog(store, date, split),
     sessions: store.sessions + (completed ? 1 : 0),
-    history: pushHistory(store, { date, kind: "session", id: session.id, title: session.name, min: round1(minutes), done: Boolean(completed) }),
+    history: pushHistory(store, { date, kind: "session", id: session.id, title: session.name, min: round1(minutes), done: Boolean(completed), cats: rounded }),
     resume: completed ? null : store.resume,
   });
 }
@@ -226,7 +273,7 @@ function recordBreath({ breath, minutes, dateKey }) {
   const date = dateKey || isoDate(new Date());
   const tried = store.breathsTried.includes(breath.id) ? store.breathsTried : [...store.breathsTried, breath.id];
   return writeStore({
-    log: addToLog(store, date, "b", minutes),
+    log: addToLog(store, date, { p: minutes }),
     breathsTried: tried,
     history: pushHistory(store, { date, kind: "breath", id: breath.id, title: breath.name, min: round1(minutes), done: true }),
   });
@@ -423,11 +470,30 @@ function weeklyRings(today = new Date()) {
   const days = plan ? plan.journey[currentStageIndex(plan, today)].days : 3;
   const perDay = (plan && Number(plan.answers.time)) || 20;
   const goal = store.settings.weeklyGoal || perDay * days;
+  const [sa, sp, sm] = store.settings.apmSplit;
+  const part = (share) => Math.max(1, Math.round((goal * share) / 100));
   return [
-    { id: "practice", label: "Practice", value: week.practice, goal, unit: "min" },
-    { id: "breath", label: "Breathing", value: week.breath, goal: days * 5, unit: "min" },
-    { id: "days", label: "Days", value: week.days, goal: days, unit: "days" },
+    { id: "a", label: "A · Asana", value: week.a, goal: part(sa), unit: "min" },
+    { id: "p", label: "P · Pranayama", value: week.p, goal: part(sp), unit: "min" },
+    { id: "m", label: "M · Meditation", value: week.m, goal: part(sm), unit: "min" },
   ];
+}
+
+/** Seconds per APM category for a flattened session. */
+function apmSplit(flatSteps, sessionId) {
+  const out = emptyCats();
+  flatSteps.forEach((st) => { out[phaseCategory(st.phase, sessionId)] += st.secs; });
+  return out;
+}
+
+/** A short line on the balance of the week. */
+function balanceLine(week) {
+  const core = week.a + week.p + week.m;
+  if (core === 0) return "Nothing yet this week. Any practice starts the rings.";
+  const asana = week.a / core;
+  if (asana > 0.75) return "Mostly asana this week. Try a Breath and mind flow.";
+  if (asana < 0.4) return "Mostly breath and meditation this week. Try an Asana focus flow.";
+  return "A good balance of asana, pranayama and meditation this week.";
 }
 
 /* Session maths */
@@ -466,10 +532,18 @@ function customStep(phase, st) {
   return { phase, title: st.t, subtitle: "", text: st.say, secs: st.s, poseId: null, side: "" };
 }
 
+/** True when a custom step names poses (step.uses) that the plan avoids. */
+const usesAvoided = (st, ctx) => Array.isArray(st.uses) && st.uses.some((id) => ctx.avoid.has(id));
+
 function isLeftOut(phase, st, ctx) {
   if (st.p) return !POSE_BY_ID[st.p] || ctx.avoid.has(st.p);
   if (st.sun) return ctx.restOnly || SUN_POSE_IDS.some((id) => ctx.avoid.has(id));
-  return ctx.restOnly && MOVE_PHASES.includes(phase);
+  return usesAvoided(st, ctx) || (ctx.restOnly && MOVE_PHASES.includes(phase));
+}
+
+/** Poses a session cannot run without (session.requires) that the plan avoids. */
+function blockingPoses(session, ctx = NO_FILTER) {
+  return Array.isArray(session.requires) ? session.requires.filter((id) => ctx.avoid.has(id)) : [];
 }
 
 const NO_FILTER = { avoid: new Set(), restOnly: false, breathSecs: BREATH_SECS };
@@ -492,13 +566,14 @@ function flattenSession(session, ctx = NO_FILTER) {
       else steps.push(customStep(phase, st));
     }
   }
-  const posesTotal = session.steps.filter((st) => isObj(st) && (st.p || st.sun)).length;
-  const posesOut = leftOut.filter((st) => st.p || st.sun).length;
+  const posesTotal = session.steps.filter((st) => isObj(st) && (st.p || st.sun || st.uses)).length;
+  const posesOut = leftOut.filter((st) => st.p || st.sun || st.uses).length;
   return { steps, leftOut, secs: steps.reduce((a, s) => a + s.secs, 0), posesTotal, posesOut };
 }
 
 /** True when a session can still be offered after the health filter. plan.js decides the pose rule. */
 function sessionOffered(session, ctx = NO_FILTER) {
+  if (blockingPoses(session, ctx).length) return false;
   return sessionUsable(session, ctx.avoid) && flattenSession(session, ctx).steps.length > 0;
 }
 

@@ -262,6 +262,13 @@ function emptyState(title, text, action) {
   return el("div", { class: "empty" }, el("p", { class: "empty-title" }, title), text && el("p", {}, text), action);
 }
 
+const SUBHEAD_MAX = 60;
+
+/** Short lines with no closing punctuation are subheadings in article bodies. */
+function isSubheading(line) {
+  return line.length <= SUBHEAD_MAX && !/[.?!:]$/.test(line.trim());
+}
+
 function articleBlocks(lines) {
   const out = [];
   let list = null;
@@ -272,6 +279,9 @@ function articleBlocks(lines) {
         out.push(list);
       }
       list.append(el("li", {}, line.slice(2)));
+    } else if (isSubheading(line)) {
+      list = null;
+      out.push(el("h3", { class: "article-subhead" }, line));
     } else {
       list = null;
       out.push(el("p", {}, line));
@@ -297,12 +307,7 @@ function ringsSvg(rings, size = 120) {
   return svg;
 }
 
-/**
- * Art for a pose or a sun position (surya-0 to surya-11): the figure from figures/<id>.svg.
- * When the file is missing the category letter tile takes its place.
- * opts: { size: "lg" | "xl" | "", figureOnly: true to drop the image instead of showing a tile }
- */
-// Figure files in figures/. Poses without a file show the category letter tile.
+// Figure files in figures/. Poses without a photo or a figure show the category letter tile.
 const FIGURE_IDS = new Set([
   "adho-mukha", "anjaneyasana", "ardha-chandrasana", "ardha-matsyendrasana", "ardha-pincha-mayurasana",
   "ardha-uttanasana", "baddha-konasana", "bakasana", "bharadvajasana", "bhujangasana", "chakrasana", "chaturanga",
@@ -324,9 +329,56 @@ function poseTile(id, size) {
   return tile(pose.en[0], CATEGORIES[pose.cat].color, size === "xl" ? "xl" : size);
 }
 
+/**
+ * Art for a pose or a sun position (surya-0 to surya-11).
+ * Order: a real photo from photos/poses, then the asanakit figure, then the category letter tile.
+ * opts: { size: "lg" | "xl" | "player" | "", figureOnly: true to return null instead of a tile }
+ */
+const SMALL_ART = ["", "lg"];
+
+const hasPoseArt = (id) => Boolean(POSE_PHOTOS[id]) || FIGURE_IDS.has(id);
+
+function posePhoto(id, size) {
+  const p = POSE_PHOTOS[id];
+  const px = ART_PX[size] || ART_PX[""];
+  const small = SMALL_ART.includes(size);
+  const dir = "photos/poses/";
+  const srcset = small ? `${dir}${p.base}-400.webp 400w` : `${dir}${p.base}-400.webp 400w, ${dir}${p.base}-800.webp 800w`;
+  return el("picture", { class: `pose-art pose-photo pose-art-${size || "md"}` },
+    el("source", { type: "image/webp", srcset, sizes: `${px}px` }),
+    el("img", { src: `${dir}${p.base}-800.jpg`, alt: p.alt, width: px, height: Math.round((px * p.h) / p.w), loading: small ? "lazy" : "eager", decoding: "async" }));
+}
+
 function poseArt(id, opts = {}) {
   const size = opts.size || "";
+  if (POSE_PHOTOS[id]) return posePhoto(id, size);
   if (!FIGURE_IDS.has(id)) return opts.figureOnly ? null : poseTile(id, size === "player" ? "xl" : size);
   const px = ART_PX[size] || ART_PX[""];
-  return el("img", { class: `pose-art pose-art-${size || "md"}`, src: `figures/${id}.svg`, alt: "", width: px, height: px, decoding: "async", loading: size === "xl" || size === "player" ? "eager" : "lazy" });
+  return el("img", { class: `pose-art pose-fig pose-art-${size || "md"}`, src: `figures/${id}.svg`, alt: "", width: px, height: px, decoding: "async", loading: size === "xl" || size === "player" ? "eager" : "lazy" });
+}
+
+/* APM display */
+
+const APM_CORE = ["a", "p", "m"];
+
+function apmLetter(cat) {
+  const info = APM_INFO[cat];
+  return el("span", { class: `apm-letter apm-${cat}`, title: info.name, "aria-hidden": "true" }, info.letter);
+}
+
+/**
+ * A thin three part bar for asana, pranayama and meditation, with a text key so colour is never the only cue.
+ * split holds seconds per category, as from apmSplit().
+ */
+function apmBar(split, opts = {}) {
+  const mins = Object.fromEntries(APM_CORE.map((k) => [k, Math.round((split[k] || 0) / 60)]));
+  const total = APM_CORE.reduce((sum, k) => sum + (split[k] || 0), 0) || 1;
+  const label = APM_CORE.map((k) => `${APM_INFO[k].name} ${mins[k]} min`).join(", ");
+  const bar = el("span", { class: "apm-track" }, APM_CORE.filter((k) => split[k] > 0).map((k) => {
+    const seg = el("span", { class: `apm-seg apm-${k}` });
+    seg.style.flexGrow = String(split[k] / total);
+    return seg;
+  }));
+  const key = el("span", { class: "apm-key" }, APM_CORE.map((k) => `${APM_INFO[k].letter} ${mins[k]}`).join(" · "), " min");
+  return el("span", { class: `apm-bar ${opts.cls || ""}`.trim(), role: "img", "aria-label": label }, bar, opts.noKey ? null : key);
 }

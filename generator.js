@@ -12,6 +12,15 @@ const FOCUS = {
   balance: { name: "Balance", cats: ["balance", "standing"] },
 };
 
+// APM balance: how the time splits between asana, pranayama and meditation.
+// b and m are the pranayama and meditation shares. Asana parts share the rest.
+const APM = {
+  asana: { name: "Asana focus", b: 0.06, m: 0.05 },
+  balanced: { name: "Balanced APM", b: 0.12, m: 0.12 },
+  mind: { name: "Breath and mind", b: 0.18, m: 0.25 },
+};
+const ASANA_SHARE = 0.77; // warm-up, sun salutation, standing and floor in SHAPE
+
 // Share of the time budget for each part of the flow.
 const SHAPE = [
   { phase: "Centring", share: 0.05 },
@@ -96,6 +105,9 @@ function generateFlow(options) {
   const plan = options.plan || null;
   const level = Math.min(options.level || 1, plan ? plan.lvl : 3);
   const focusKey = FOCUS[options.focus] ? options.focus : "balanced";
+  const apmKey = APM[options.apm] ? options.apm : "asana";
+  const apm = APM[apmKey];
+  const f = (1 - SHAPE[0].share - SHAPE[6].share - apm.b - apm.m) / ASANA_SHARE;
   const rand = seededRandom(options.seed || new Date().toISOString().slice(0, 10) + focusKey + minutes);
   const avoid = new Set(plan ? plan.health.avoid : []);
   const allowed = (id) => {
@@ -118,11 +130,11 @@ function generateFlow(options) {
   steps.push("Centring", { p: centre, b: Math.max(4, Math.round((total * SHAPE[0].share) / breathSecs)) });
   used.add(centre);
 
-  steps.push("Warm-up", ...fillBudget(WARMUPS.filter(allowed).map(poseById), total * SHAPE[1].share, 5, breathSecs, used, allowed));
+  steps.push("Warm-up", ...fillBudget(WARMUPS.filter(allowed).map(poseById), total * SHAPE[1].share * f, 5, breathSecs, used, allowed));
 
   const sunOk = SUN_STEP_POSES.every((id) => !avoid.has(id));
   if (sunOk && minutes > 10) {
-    const rounds = Math.max(2, Math.round(((total * SHAPE[2].share) / FLOW_SUN_SECS) * (DOSHA_SUN[dosha] || 1)));
+    const rounds = Math.max(2, Math.round(((total * SHAPE[2].share * f) / FLOW_SUN_SECS) * (DOSHA_SUN[dosha] || 1)));
     steps.push("Sun salutation", { sun: rounds });
   }
 
@@ -132,14 +144,16 @@ function generateFlow(options) {
     const fits = (p) => (standing ? part.cats.includes(p.cat) || STANDING_FOLDS.includes(p.id) : part.cats.includes(p.cat) && !STANDING_FOLDS.includes(p.id));
     const pool = POSES.filter((p) => fits(p) && allowed(p.id));
     const ranked = rankPoses(pool, focusCats, favour, rand);
-    const share = sunOk && minutes > 10 ? part.share : part.share + SHAPE[2].share / 2;
+    const share = (sunOk && minutes > 10 ? part.share : part.share + SHAPE[2].share / 2) * f;
     const picked = fillBudget(ranked, total * share, breaths, breathSecs, used, allowed);
     if (picked.length) steps.push(part.phase, ...picked);
   });
 
   const breathId = pickBreath(plan, rand);
   const breath = BREATHS.find((b) => b.id === breathId);
-  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(minutes > 10 ? 60 : 45, Math.round(total * SHAPE[5].share)) });
+  steps.push("Breathing", { t: breath.name, say: breath.how.join(" "), s: Math.max(minutes > 10 ? 60 : 45, Math.round(total * apm.b)) });
+  const med = MEDITATIONS[Math.floor(rand() * MEDITATIONS.length)];
+  steps.push("Meditation", { t: med.t, say: med.say, s: Math.max(60, Math.round(total * apm.m)) });
 
   const relax = Math.max(minutes > 10 ? MIN_RELAX_SECS : 120, total * SHAPE[6].share);
   steps.push("Relaxation", { p: "savasana", b: Math.round(relax / breathSecs) });
@@ -150,7 +164,7 @@ function generateFlow(options) {
     name: FOCUS[focusKey].name + " flow",
     lvl: level, focus: minutes + " minutes", color: plan ? DOSHAS[dosha].color : "#E8743B",
     about: plan ? "Built for your " + DOSHAS[dosha].name + " profile with your health answers in mind." : "A balanced flow built for you just now.",
-    generated: true, steps,
+    generated: true, apm: apmKey, steps,
   };
 }
 
@@ -191,15 +205,15 @@ if (typeof process !== "undefined" && process.env && process.env.STHIRA_CHECK) {
   const base = { frame: "k", skin: "k", energy: "k", sleep: "k", stress: "k", weather: "k", experience: "some", goal: "strength", time: "20" };
   [10, 20, 30, 45, 60].forEach((m) => {
     Object.keys(FOCUS).forEach((f) => {
-      [1, 2, 3].forEach((lvl) => {
-        const flow = generateFlow({ minutes: m, level: lvl, focus: f, seed: "t" + m + f + lvl });
+      [1, 2, 3].forEach((lvl) => Object.keys(APM).forEach((apm) => {
+        const flow = generateFlow({ minutes: m, level: lvl, focus: f, apm, seed: "t" + m + f + lvl + apm });
         const secs = sessionSecs(flow);
         assert.ok(secs > m * 60 * 0.75 && secs < m * 60 * 1.3, `${m} ${f} ${lvl} gave ${Math.round(secs / 60)} min`);
         const poseSteps = flow.steps.filter((s) => s.p);
         assert.strictEqual(poseSteps[poseSteps.length - 1].p, "savasana", "the last pose is always relaxation");
         assert.strictEqual(flow.steps[flow.steps.length - 1], CLOSE_STEP, "ends with the closing ritual");
         flow.steps.filter((s) => s.p).forEach((s) => assert.ok(poseById(s.p).lvl <= lvl, `level ${lvl} got ${s.p}`));
-      });
+      }));
     });
   });
   ["wrist", "lowback", "pregnancy", "highbp", "knee"].forEach((c) => {

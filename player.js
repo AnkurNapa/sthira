@@ -211,6 +211,22 @@ function buildPlayerUI() {
   return ui;
 }
 
+/** Tint the progress bar by APM category: soft for what is left, full colour for what is done. */
+function tintProgress(track, fill, steps, totalSecs, sessionId) {
+  const gradient = (suffix) => {
+    let at = 0;
+    const stops = steps.map((s) => {
+      const from = (at / totalSecs) * 100;
+      at += s.secs;
+      return `var(--apm-${phaseCategory(s.phase, sessionId)}${suffix}) ${from.toFixed(2)}% ${((at / totalSecs) * 100).toFixed(2)}%`;
+    });
+    return `linear-gradient(to right, ${stops.join(", ")})`;
+  };
+  track.classList.add("apm-progress");
+  track.style.background = gradient("-soft");
+  fill.style.background = gradient("");
+}
+
 function startSession(session, startIdx = 0, trigger) {
   if (playerOpen) return;
   const ctx = planContext();
@@ -233,17 +249,23 @@ function runPlayer(session, steps, startIdx) {
   let idx = startIdx;
   let finished = false;
   let earned = [];
-  // Seconds spent in each pose, added when a step ends.
+  // Seconds spent in each pose and in each APM category, added when a step ends.
   const poseTime = {};
+  const catSecs = emptyCats();
   let stepStartMs = 0;
   const closeStep = () => {
     const s = steps[idx];
     const secs = (clock.playedMs - stepStartMs) / 1000;
-    if (s && s.poseId && secs > 0) poseTime[s.poseId] = (poseTime[s.poseId] || 0) + secs;
+    if (s && secs > 0) {
+      if (s.poseId) poseTime[s.poseId] = (poseTime[s.poseId] || 0) + secs;
+      catSecs[phaseCategory(s.phase, session.id)] += secs;
+    }
     stepStartMs = clock.playedMs;
   };
+  const catMinutes = () => Object.fromEntries(APM_KEYS.map((k) => [k, catSecs[k] / 60]));
   let lastJump = 0;
   const clock = makeCountdown({ onTick: paintTime, onEnd: () => go(idx + 1) });
+  tintProgress(ui.progress, ui.bar, steps, totalSecs, session.id);
 
   const playBtn = ctlButton("pause", "Pause", togglePlay, "main");
   const backBtn = ctlButton("prev", "Previous step", () => jump(idx - 1));
@@ -266,7 +288,9 @@ function runPlayer(session, steps, startIdx) {
     const art = s.art ? poseArt(s.art, { size: "player", figureOnly: true }) : null;
     ui.art.replaceChildren(art || "");
     ui.visual.classList.toggle("has-art", Boolean(art));
-    ui.phase.textContent = s.phase;
+    const cat = phaseCategory(s.phase, session.id);
+    ui.phase.replaceChildren(cat === "r" ? "" : apmLetter(cat), s.phase);
+    ui.phase.dataset.cat = cat;
     ui.title.textContent = s.title;
     ui.sub.textContent = s.subtitle;
     ui.cue.textContent = s.text;
@@ -279,7 +303,7 @@ function runPlayer(session, steps, startIdx) {
     ui.clock.textContent = fmtClock(ms);
     ui.ringFg.style.strokeDashoffset = String(RING_C * (1 - ms / (s.secs * 1000)));
     const pct = Math.round(((before[idx] + s.secs - ms / 1000) / totalSecs) * 100);
-    ui.bar.style.width = `${pct}%`;
+    ui.bar.style.clipPath = `inset(0 ${100 - pct}% 0 0)`;
     ui.progress.setAttribute("aria-valuenow", String(pct));
   }
 
@@ -337,7 +361,7 @@ function runPlayer(session, steps, startIdx) {
     finished = true;
     clock.stop();
     stopSpeech();
-    recordSession({ session, minutes: clock.playedMs / 60000, completed: true, dateKey, poses: poseTime });
+    recordSession({ session, minutes: clock.playedMs / 60000, completed: true, dateKey, poses: poseTime, cats: catMinutes() });
     clearResume();
     view.replaceChildren(completionView(session, clock.playedMs, () => sheet.close()));
     chime();
@@ -360,7 +384,7 @@ function runPlayer(session, steps, startIdx) {
     if (!finished) {
       if (idx > 0) saveResume(session.id, idx);
       closeStep();
-      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey, poses: poseTime });
+      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey, poses: poseTime, cats: catMinutes() });
       earned = afterPractice();
     }
     celebrateLater(earned);
