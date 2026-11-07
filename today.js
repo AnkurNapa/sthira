@@ -285,7 +285,6 @@ function faqSection() {
 
 function restBanner() {
   return el("div", { class: "band-inner" }, el("a", { class: "banner caution", href: "#/plan" },
-    icon("alert", 20),
     el("span", {}, el("strong", {}, "Rest and breathing only for now. "), "Your plan keeps to gentle breathing until your doctor clears you. Open your plan.")));
 }
 
