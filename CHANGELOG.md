@@ -2,6 +2,18 @@
 
 All notable changes to Sthira. Versions follow docs/RELEASE.md.
 
+## 0.3.0 (7 November 2026)
+
+### Added
+- Real photos for 32 poses and 9 sun salutation positions, from Pexels, with photographer credits.
+- The APM method: every practice runs asana, then pranayama, then meditation. Five guided meditations in the Emma voice.
+- APM balance in the flow generator: Asana focus, Balanced APM or Breath and mind.
+- 19 poses, 11 breathing practices, 11 articles and 4 sessions: Moon Salutation Flow, Spine Care, 15 Minute Meditation and Sun Salutations A and B.
+
+### Changed
+- Sessions that rely on poses your plan avoids are no longer offered.
+- Opening one detail page from another replaces it. Back returns to the previous one.
+
 ## 0.2.0 (7 November 2026)
 
 ### Added

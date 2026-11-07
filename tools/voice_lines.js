@@ -11,9 +11,9 @@ vm.createContext(ctx);
 ["data.js", "plan.js", "generator.js"].forEach((f) => {
   // Top level const names are not globals in a vm context, so expose them.
   const src = fs.readFileSync(path.join(root, f), "utf8");
-  vm.runInContext(src + "\n;globalThis.__x = { POSES, SURYA, SESSIONS, BREATHS };", ctx);
+  vm.runInContext(src + "\n;globalThis.__x = { POSES, SURYA, SESSIONS, BREATHS, MEDITATIONS };", ctx);
 });
-const { POSES, SURYA, SESSIONS, BREATHS } = ctx.__x;
+const { POSES, SURYA, SESSIONS, BREATHS, MEDITATIONS } = ctx.__x;
 
 const SIDE_SWAP = { right: "left", left: "right", Right: "Left", Left: "Right" };
 const swapSides = (t) => t.replace(/\b(right|left|Right|Left)\b/g, (m) => SIDE_SWAP[m]);
@@ -38,6 +38,7 @@ BREATHS.forEach((b) => {
   b.pattern.forEach(([label]) => add(label));
 });
 add("Gentle rest. Belly Breathing.");
+MEDITATIONS.forEach((m) => { add(m.t); add(m.say); });
 add("Well done. Your session is complete.");
 
 // Split exactly like voice.js does.

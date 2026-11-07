@@ -5,7 +5,7 @@ const FLOW_LENGTHS = [10, 20, 30, 45, 60];
 const BUILDER_BREATHS = { min: 1, max: 40, start: 5 };
 const SAVASANA_BREATHS = 30;
 
-let genState = { minutes: 20, level: 1, focus: "balanced", seed: "", flow: null };
+let genState = { minutes: 20, level: 1, focus: "balanced", apm: "balanced", seed: "", flow: null };
 
 function planLevel() {
   const plan = readPlan();
@@ -19,8 +19,8 @@ function profileLine(plan) {
 function generate(newSeed) {
   const plan = readPlan();
   const level = Math.min(genState.level, planLevel());
-  const seed = newSeed ? `${Date.now()}` : genState.seed || `${isoDate(new Date())}${genState.focus}${genState.minutes}${level}`;
-  const flow = generateFlow({ minutes: genState.minutes, level, focus: genState.focus, plan, seed, breathSecs: settings().breathSecs });
+  const seed = newSeed ? `${Date.now()}` : genState.seed || `${isoDate(new Date())}${genState.focus}${genState.minutes}${level}${genState.apm}`;
+  const flow = generateFlow({ minutes: genState.minutes, level, focus: genState.focus, apm: genState.apm, plan, seed, breathSecs: settings().breathSecs });
   const named = { ...flow, about: profileLine(plan) };
   genState = { ...genState, level, seed, flow: rememberFlow(named) };
   return genState.flow;
@@ -38,6 +38,7 @@ function flowPreview(flow) {
         el("h3", { class: "sheet-title" }, flow.name),
         el("p", {}, flow.about)),
       sessionHeart(flow)),
+    apmBar(apmSplit(flat.steps, flow.id)),
     el("div", { class: "btn-row" },
       el("button", { type: "button", class: "pill", onclick: (e) => startSession(flow, 0, e.currentTarget) }, "Start"),
       el("button", { type: "button", class: "pill pill-ghost", onclick: () => { generate(true); paintCreate(); } }, "Shuffle"),
@@ -60,6 +61,13 @@ function generatorPanel() {
     sectionTitle("Level"),
     levelChips,
     cap < 3 && el("p", { class: "note" }, `Your plan caps the level at ${LEVELS[cap]} for now.`),
+    sectionTitle("APM balance"),
+    el("div", { class: "segmented", role: "group", "aria-label": "APM balance" }, Object.entries(APM).map(([k, a]) =>
+      el("button", { type: "button", "aria-pressed": String(k === genState.apm), onclick: (e) => {
+        genState = { ...genState, apm: k, seed: "" };
+        e.currentTarget.parentElement.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === e.currentTarget)));
+      } }, a.name))),
+    el("p", { class: "apm-note" }, "Every flow runs asana, then pranayama, then meditation. Choose how the time is shared."),
     sectionTitle("Focus"),
     chipRow("Focus", Object.entries(FOCUS).map(([k, f]) => [k, f.name]), genState.focus, (v) => { genState = { ...genState, focus: v, seed: "" }; }),
     el("div", { class: "btn-row" }, el("button", { type: "button", class: "pill", onclick: () => { generate(false); paintCreate(); } }, genState.flow ? "Generate again" : "Generate")));

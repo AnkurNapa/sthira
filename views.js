@@ -19,12 +19,13 @@ function sessionMeta(session, flat) {
 function sessionTile(session, cls = "") {
   const ctx = planContext();
   const flat = flattenSession(session, ctx);
-  const adjusted = readPlan() && (!sessionIsSafe(session, ctx.avoid) || flat.leftOut.length > 0);
+  const adjusted = readPlan() && (!sessionIsSafe(session, ctx.avoid) || flat.leftOut.length > 0 || blockingPoses(session, ctx).length > 0);
   const card = el("a", { class: `session-tile ${cls}`.trim(), href: `#/sessions/${session.id}` },
     el("span", { class: "session-tile-meta" }, sessionMeta(session, flat)),
     el("span", { class: "session-tile-name" }, session.name),
     el("span", { class: "session-tile-focus" }, session.focus),
-    adjusted && el("span", { class: "badge on-colour" }, sessionOffered(session, ctx) ? "Adjusted for you" : "Not for you right now"));
+    apmBar(apmSplit(flat.steps, session.id)),
+    adjusted && el("span", { class: "badge on-colour" }, sessionOffered(session, ctx) ? "Adjusted for you" : "Not in your plan"));
   card.style.setProperty("--c", session.color);
   return card;
 }
@@ -43,9 +44,9 @@ function renderSessions() {
 }
 
 function leftOutNote(flat) {
-  const poses = flat.leftOut.filter((st) => st.p).length;
+  const poses = flat.leftOut.filter((st) => st.p || st.uses).length;
   const sun = flat.leftOut.some((st) => st.sun);
-  const other = flat.leftOut.some((st) => st.t);
+  const other = flat.leftOut.some((st) => st.t && !st.uses);
   const parts = [];
   if (poses) parts.push(`${plural(poses, "pose")} left out for your safety.`);
   if (sun) parts.push("The sun salutation is left out too.");
@@ -85,8 +86,13 @@ function phaseList(session, ctx) {
 
 function startButtons(session, flat, offered) {
   if (!offered) {
+    const blocked = blockingPoses(session, planContext());
+    const reasons = [...new Set(blocked.flatMap((id) => avoidReason(id, "pose").split("; ")).filter(Boolean))];
+    const why = blocked.length
+      ? `This session is not in your plan. It depends on poses that are not safe for you because of: ${reasons.join("; ")}.`
+      : "Too many poses in this session are left out for your safety.";
     return el("div", { class: "card caution" },
-      el("p", {}, "Too many poses in this session are left out for your safety. Try Yoga Nidra or a breathing practice instead."),
+      el("p", {}, `${why} Try Yoga Nidra or a breathing practice instead.`),
       el("div", { class: "btn-row" },
         el("a", { class: "pill", href: "#/sessions/nidra" }, "Yoga Nidra"),
         el("a", { class: "pill pill-ghost", href: "#/breathe" }, "Breathing")));
@@ -122,7 +128,8 @@ function showSessionSheet(id, routeKey) {
     el("div", {},
       el("p", { class: "session-tile-meta" }, `${sessionMeta(session, flat)} · ${plural(flat.steps.length, "step")}`),
       el("h2", { class: "sheet-title" }, session.name),
-      el("p", {}, session.focus)),
+      el("p", {}, session.focus),
+      apmBar(apmSplit(flat.steps, session.id))),
     sessionHeart(session));
   hero.style.setProperty("--c", session.color);
   const offered = sessionOffered(session, ctx);
@@ -222,8 +229,8 @@ function showPoseSheet(id, routeKey) {
   const reason = planContext().avoid.has(pose.id) ? avoidReason(pose.id, "pose") : "";
   return openSheet(el("div", { class: "sheet-content" },
     reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}.`),
-    FIGURE_IDS.has(pose.id) && el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
-    el("div", { class: "pose-head" }, !FIGURE_IDS.has(pose.id) && poseArt(pose.id, { size: "xl" }),
+    hasPoseArt(pose.id) && el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
+    el("div", { class: "pose-head" }, !hasPoseArt(pose.id) && poseArt(pose.id, { size: "xl" }),
       el("div", { class: "pose-head-text" }, el("h2", { class: "sheet-title" }, pose.sk), el("p", { class: "sheet-sub" }, pose.en), reviewedLine()),
       heartButton("pose", pose.id, pose.en)),
     el("div", { class: "tags" }, el("span", { class: "tag" }, cat.name), el("span", { class: "tag" }, LEVELS[pose.lvl]), pose.sided && el("span", { class: "tag" }, "Both sides")),
@@ -289,11 +296,17 @@ function articleCard(article) {
     el("span", { class: "muted" }, article.sub));
 }
 
+/** Start here first, then the APM method, then the rest in their usual order. */
+function learnOrder() {
+  const first = ["start", "apm"].map((id) => ARTICLE_BY_ID[id]).filter(Boolean);
+  return [...first, ...ARTICLES.filter((a) => !first.includes(a))];
+}
+
 function renderLearn() {
   return el("div", { class: "page" },
     pageHead("Learn", "Practise with confidence.", "Short guides on safety, breath and building a habit."),
     el("div", { class: "photo-tile wide video-tile learn-banner" }, loopVideo("hands-mudra-detail", { eager: true })),
-    el("div", { class: "grid grid-articles" }, ARTICLES.map(articleCard)));
+    el("div", { class: "grid grid-articles" }, learnOrder().map(articleCard)));
 }
 
 // A header photo for each article. Articles not listed show their icon only.

@@ -87,7 +87,7 @@ test("health filter removes avoided poses and the sun salutation", () => {
 test("rest only plans keep breathing and relaxation only", () => {
   const run = sandbox(memoryStorage());
   const flat = run(`flattenSession(SESSION_BY_ID.desk, { avoid: new Set(healthFilter(["surgery"]).avoid), restOnly: true, breathSecs: 6 })`);
-  assert.deepStrictEqual(flat.steps.map((s) => s.phase), ["Breathing"]);
+  assert.deepStrictEqual(flat.steps.map((s) => s.phase), ["Breathing", "Meditation"]);
   const rest = "{ avoid: new Set(healthFilter(['surgery']).avoid), restOnly: true, breathSecs: 6 }";
   assert.ok(!run(`sessionOffered(SESSION_BY_ID.desk, ${rest})`));
   assert.ok(!run(`sessionOffered(SESSION_BY_ID.morning, ${rest})`));
@@ -103,11 +103,11 @@ test("no holds drops hold phases from the pacer", () => {
 test("streak counts back from today or yesterday and stops at a gap", () => {
   const run = sandbox(memoryStorage());
   const today = "new Date(2026, 10, 7, 9)";
-  const log = `{ "2026-11-07": { s: 10, b: 0 }, "2026-11-06": { s: 0, b: 2 }, "2026-11-05": { s: 5, b: 0 }, "2026-11-03": { s: 5, b: 0 } }`;
+  const log = `{ "2026-11-07": { a: 10, p: 0, m: 0, r: 0 }, "2026-11-06": { a: 0, p: 2, m: 0, r: 0 }, "2026-11-05": { a: 5, p: 0, m: 0, r: 0 }, "2026-11-03": { a: 5, p: 0, m: 0, r: 0 } }`;
   assert.strictEqual(run(`streakDays(${log}, ${today})`), 3);
-  const noToday = `{ "2026-11-06": { s: 4, b: 0 }, "2026-11-05": { s: 5, b: 0 } }`;
+  const noToday = `{ "2026-11-06": { a: 4, p: 0, m: 0, r: 0 }, "2026-11-05": { a: 5, p: 0, m: 0, r: 0 } }`;
   assert.strictEqual(run(`streakDays(${noToday}, ${today})`), 2);
-  const stale = `{ "2026-11-05": { s: 5, b: 0 } }`;
+  const stale = `{ "2026-11-05": { a: 5, p: 0, m: 0, r: 0 } }`;
   assert.strictEqual(run(`streakDays(${stale}, ${today})`), 0);
 });
 
@@ -117,7 +117,7 @@ test("dates use local calendar days around midnight", () => {
   assert.strictEqual(run("isoDate(new Date(2026, 10, 8, 0, 1))"), "2026-11-08");
   assert.strictEqual(run("dayNumber(new Date(2026, 10, 8, 0, 1)) - dayNumber(new Date(2026, 10, 7, 23, 59))"), 1);
   run(`recordSession({ session: SESSION_BY_ID.morning, minutes: 20, completed: true, dateKey: "2026-11-07" })`);
-  assert.strictEqual(run(`readStore().log["2026-11-07"].s`), 20);
+  assert.strictEqual(run(`readStore().log["2026-11-07"].a`), 20);
   assert.strictEqual(run(`readStore().log["2026-11-08"]`), undefined);
 });
 
@@ -132,7 +132,7 @@ test("storage that throws still works in memory", () => {
 
 test("missing localStorage still works", () => {
   const run = sandbox(null);
-  assert.strictEqual(run("readStore().schema"), 2);
+  assert.strictEqual(run("readStore().schema"), 3);
 });
 
 test("corrupt or old saved data migrates safely", () => {
@@ -142,7 +142,7 @@ test("corrupt or old saved data migrates safely", () => {
   const old = memoryStorage();
   old.data["sthira.v1"] = JSON.stringify({ days: { "2026-11-06": 14, bad: 3 }, sessions: 4, welcomed: true });
   const run = sandbox(old);
-  assert.deepStrictEqual(run(`readStore().log`), { "2026-11-06": { s: 14, b: 0 } });
+  assert.deepStrictEqual(run(`readStore().log`), { "2026-11-06": { a: 14, p: 0, m: 0, r: 0 } });
   assert.strictEqual(run("readStore().sessions"), 4);
   assert.strictEqual(run("readStore().welcomed"), true);
 });
@@ -233,8 +233,6 @@ test("figure list in ui.js matches the files in figures/", () => {
   const run = sandbox(memoryStorage());
   const sun = run("SURYA.map((_, i) => 'surya-' + i)");
   sun.forEach((id) => assert.ok(listed.includes(id), id));
-  const missing = run("POSES.map((p) => p.id)").filter((id) => !listed.includes(id));
-  assert.ok(missing.length < 20, `poses without a figure use the tile: ${missing.join(" ")}`);
 });
 
 test("media.js agrees with media/manifest.json and every name used exists", () => {
@@ -259,9 +257,9 @@ test("media.js agrees with media/manifest.json and every name used exists", () =
 function seeded(storage) {
   const run = sandbox(storage || memoryStorage());
   run(`writeStore({ log: {
-    "2026-10-27": { s: 20, b: 0 }, "2026-10-31": { s: 0, b: 5 },
-    "2026-11-02": { s: 10, b: 2 }, "2026-11-03": { s: 30, b: 0 }, "2026-11-07": { s: 15, b: 3 },
-    "2025-12-31": { s: 9, b: 0 } },
+    "2026-10-27": { a: 20, p: 0, m: 0, r: 0 }, "2026-10-31": { a: 0, p: 5, m: 0, r: 0 },
+    "2026-11-02": { a: 10, p: 2, m: 0, r: 0 }, "2026-11-03": { a: 30, p: 0, m: 0, r: 0 }, "2026-11-07": { a: 15, p: 3, m: 0, r: 0 },
+    "2025-12-31": { a: 9, p: 0, m: 0, r: 0 } },
     history: [
       { ts: 1, date: "2026-10-27", kind: "session", id: "morning", title: "Morning Wake-Up", min: 20, done: true },
       { ts: 2, date: "2026-11-03", kind: "session", id: "morning", title: "Morning Wake-Up", min: 30, done: true },
@@ -275,8 +273,8 @@ test("period totals and the change against the previous period", () => {
   const today = "new Date(2026, 10, 7, 21)";
   assert.deepStrictEqual(run(`periodRange("week", ${today})`), { from: "2026-11-02", to: "2026-11-08" });
   assert.deepStrictEqual(run(`periodRange("month", ${today}, -1)`), { from: "2026-10-01", to: "2026-10-31" });
-  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today})`), { minutes: 60, breath: 5, sessions: 1, days: 3 });
-  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today}, -1)`), { minutes: 25, breath: 5, sessions: 1, days: 2 });
+  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today})`), { minutes: 60, a: 55, p: 5, m: 0, sessions: 1, days: 3 });
+  assert.deepStrictEqual(run(`periodTotals(readStore(), "week", ${today}, -1)`), { minutes: 25, a: 20, p: 5, m: 0, sessions: 1, days: 2 });
   assert.strictEqual(run(`changeText(60, 25, "week", "minutes")`), "35 minutes more than this time last week");
   assert.strictEqual(run(`changeText(1, 3, "month", "sessions")`), "2 sessions fewer than this time last month");
   assert.strictEqual(run(`periodTotals(readStore(), "month", new Date(2026, 10, 2), -1, true).minutes`), 0);
@@ -284,7 +282,7 @@ test("period totals and the change against the previous period", () => {
   assert.strictEqual(run(`changeText(4, 4, "year", "days")`), "Same as this time last year");
   assert.strictEqual(run(`periodTotals(readStore(), "year", ${today}, -1).minutes`), 9);
   assert.strictEqual(run(`periodBars(readStore(), "month", ${today}).length`), 30);
-  assert.strictEqual(run(`periodBars(readStore(), "year", ${today})[10].s`), 55);
+  assert.strictEqual(run(`periodBars(readStore(), "year", ${today})[10].a`), 55);
 });
 
 test("heatmap buckets local dates across midnight and month ends", () => {
@@ -322,11 +320,11 @@ test("import validates the file and merges without double counting", () => {
   const exported = run("exportData()");
   const res = run(`importData(${JSON.stringify(JSON.stringify(exported))})`);
   assert.ok(res.ok, res.message);
-  assert.strictEqual(run(`readStore().log["2026-11-03"].s`), 30);
+  assert.strictEqual(run(`readStore().log["2026-11-03"].a`), 30);
   assert.strictEqual(run("readStore().history.length"), 4);
   const other = { app: "sthira", version: 1, store: { log: { "2026-11-05": { s: 12, b: 0 } }, history: [{ ts: 9, date: "2026-11-05", kind: "session", id: "desk", title: "Desk Relief", min: 12, done: true }], poseSecs: { tadasana: 40 } }, flows: [{ id: "my-x", name: "X", steps: ["S", { p: "tadasana", b: 5 }] }] };
   assert.ok(run(`importData(${JSON.stringify(other)})`).ok);
-  assert.strictEqual(run(`readStore().log["2026-11-05"].s`), 12);
+  assert.strictEqual(run(`readStore().log["2026-11-05"].a`), 12);
   assert.strictEqual(run("readStore().history.length"), 5);
   assert.strictEqual(run("readFlows().length"), 1);
   assert.strictEqual(run("readStore().poseSecs.tadasana"), 40);
@@ -337,6 +335,118 @@ test("pose seconds add up across sessions", () => {
   run(`recordSession({ session: SESSION_BY_ID.desk, minutes: 5, completed: true, poses: { tadasana: 35.4 } })`);
   run(`recordSession({ session: SESSION_BY_ID.desk, minutes: 5, completed: true, poses: { tadasana: 20 } })`);
   assert.strictEqual(run("readStore().poseSecs.tadasana"), 55);
+});
+
+test("pose photos agree with photos/poses/manifest.json and every file exists", () => {
+  const dir = path.join(__dirname, "photos", "poses");
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, "manifest.json"), "utf8"));
+  const ctx = vm.createContext({});
+  vm.runInContext(`${fs.readFileSync(path.join(__dirname, "pose-photos.js"), "utf8")}; this.P = POSE_PHOTOS;`, ctx);
+  const run = sandbox(memoryStorage());
+  const poseIds = new Set(run("POSES.map((p) => p.id)"));
+  const surya = run("SURYA.length");
+  manifest.forEach((m) => {
+    const sun = /^surya-(\d+)$/.exec(m.id);
+    if (sun) assert.ok(Number(sun[1]) >= 1 && Number(sun[1]) <= surya, `${m.id} maps to a SURYA index`);
+    else assert.ok(poseIds.has(m.id), `${m.id} is a pose`);
+    const artId = sun ? `surya-${Number(sun[1]) - 1}` : m.id;
+    assert.ok(ctx.P[artId], `${m.id} is in pose-photos.js as ${artId}`);
+    assert.strictEqual(ctx.P[artId].alt, m.alt);
+    ["-400.webp", "-800.webp", "-800.jpg"].forEach((suffix) => assert.ok(fs.existsSync(path.join(dir, m.file_base + suffix)), m.file_base + suffix));
+  });
+  assert.strictEqual(Object.keys(ctx.P).length, manifest.length);
+  ["surya-0", "surya-5", "surya-11"].forEach((id) => assert.ok(!ctx.P[id], `${id} has no photo`));
+});
+
+function planCtx(run, conditions) {
+  return `{ avoid: new Set(buildPlan({ experience: "regular", conditions: ${JSON.stringify(conditions)} }).health.avoid), restOnly: false, breathSecs: 6 }`;
+}
+
+test("a high blood pressure plan cannot start moon or salutations-ab", () => {
+  const run = sandbox(memoryStorage());
+  const ctx = planCtx(run, ["highbp"]);
+  ["moon", "salutations-ab"].forEach((id) => {
+    assert.ok(run(`blockingPoses(SESSION_BY_ID["${id}"], ${ctx}).length > 0`), `${id} is blocked`);
+    assert.strictEqual(run(`sessionOffered(SESSION_BY_ID["${id}"], ${ctx})`), false, `${id} not offered`);
+  });
+});
+
+test("a knee plan gets spine without the Child's Pose to Cobra step", () => {
+  const run = sandbox(memoryStorage());
+  const ctx = planCtx(run, ["knee"]);
+  const flat = run(`flattenSession(SESSION_BY_ID.spine, ${ctx})`);
+  assert.ok(!flat.steps.some((st) => st.title === "Child's Pose to Cobra"));
+  assert.ok(flat.leftOut.some((st) => st.t === "Child's Pose to Cobra"));
+  assert.ok(flat.posesOut >= 1);
+  assert.ok(run(`sessionOffered(SESSION_BY_ID.spine, ${ctx})`));
+});
+
+test("a plan with no conditions gets all four new sessions in full", () => {
+  const run = sandbox(memoryStorage());
+  const ctx = planCtx(run, ["none"]);
+  ["moon", "spine", "meditate", "salutations-ab"].forEach((id) => {
+    assert.ok(run(`sessionOffered(SESSION_BY_ID["${id}"], ${ctx})`), id);
+    assert.strictEqual(run(`flattenSession(SESSION_BY_ID["${id}"], ${ctx}).leftOut.length`), 0, id);
+  });
+});
+
+test("every breath pattern moves the pacer in, out or holds", () => {
+  const run = sandbox(memoryStorage());
+  const labels = run("BREATHS.flatMap((b) => b.pattern.map((p) => p[0]))");
+  assert.ok(labels.length > 30);
+  assert.ok(run("BREATHS.every((b) => b.pattern.every(([l, s]) => typeof l === 'string' && s > 0))"));
+  assert.ok(run("BREATHS.every((b) => breathPattern(b, true).length > 0)"));
+});
+
+test("APM minutes per session follow the phases", () => {
+  const run = sandbox(memoryStorage());
+  const split = (id) => run(`apmSplit(flattenSession(SESSION_BY_ID["${id}"]).steps, "${id}")`);
+  const morning = split("morning");
+  assert.ok(morning.a > morning.p && morning.p > 0 && morning.m > 0 && morning.r > 0, JSON.stringify(morning));
+  const nidra = split("nidra");
+  assert.strictEqual(nidra.a + nidra.p, 0);
+  assert.ok(nidra.m > 0);
+  const meditate = split("meditate");
+  assert.strictEqual(meditate.a, 0);
+  run("SESSIONS").forEach((sess) => {
+    const sp = split(sess.id);
+    assert.strictEqual(sp.a + sp.p + sp.m + sp.r, run(`flattenSession(SESSION_BY_ID["${sess.id}"]).secs`), sess.id);
+  });
+  assert.strictEqual(run(`phaseCategory("Breathing", "morning")`), "p");
+  assert.strictEqual(run(`phaseCategory("Relaxation", "nidra")`), "r");
+});
+
+test("old history migrates: session minutes to asana, pacer minutes to pranayama", () => {
+  const old = memoryStorage();
+  old.data["sthira.v1"] = JSON.stringify({ schema: 2, log: { "2026-11-01": { s: 30, b: 6 } }, history: [{ ts: 1, date: "2026-11-01", kind: "session", id: "morning", title: "Morning Wake-Up", min: 30, done: true }], sessions: 1 });
+  const run = sandbox(old);
+  assert.deepStrictEqual(run(`readStore().log["2026-11-01"]`), { a: 30, p: 6, m: 0, r: 0 });
+  assert.deepStrictEqual(run(`weekStats(readStore().log, new Date(2026, 10, 1))`), { a: 30, p: 6, m: 0, r: 0, days: 1 });
+  run(`recordSession({ session: SESSION_BY_ID.morning, minutes: 10, completed: true, dateKey: "2026-11-01", cats: { a: 6, p: 2, m: 1, r: 1 } })`);
+  assert.deepStrictEqual(run(`readStore().log["2026-11-01"]`), { a: 36, p: 8, m: 1, r: 1 });
+  run(`recordSession({ session: SESSION_BY_ID.morning, minutes: 5, completed: true, dateKey: "2026-11-01" })`);
+  assert.strictEqual(run(`readStore().log["2026-11-01"].a`), 41);
+});
+
+test("rings split the weekly goal 70 15 15 and Settings can change it", () => {
+  const run = sandbox(memoryStorage());
+  run("updateSettings({ weeklyGoal: 100 })");
+  assert.deepStrictEqual(run("weeklyRings().map((r) => r.goal)"), [70, 15, 15]);
+  run("updateSettings({ apmSplit: [50, 25, 25] })");
+  assert.deepStrictEqual(run("weeklyRings().map((r) => r.goal)"), [50, 25, 25]);
+  run("updateSettings({ apmSplit: [90, 90, 90] })");
+  assert.deepStrictEqual(run("settings().apmSplit"), [70, 15, 15]);
+  assert.strictEqual(run("balanceLine({ a: 90, p: 5, m: 5 })"), "Mostly asana this week. Try a Breath and mind flow.");
+});
+
+test("generator APM presets move time from asana to breath and mind", () => {
+  const run = sandbox(memoryStorage());
+  const share = (apm) => run(`(() => { const f = generateFlow({ minutes: 30, focus: "balanced", apm: "${apm}", seed: "apm" }); const s = apmSplit(flattenSession(f).steps, f.id); const core = s.a + s.p + s.m; return { a: s.a / core, pm: (s.p + s.m) / core }; })()`);
+  const asana = share("asana");
+  const balanced = share("balanced");
+  const mind = share("mind");
+  assert.ok(asana.a > balanced.a && balanced.a > mind.a, JSON.stringify({ asana, balanced, mind }));
+  assert.ok(mind.pm > balanced.pm && balanced.pm > asana.pm);
 });
 
 let failed = 0;

@@ -54,7 +54,7 @@ function tourPanels() {
   return [
     { title: "Learn every pose safely.", text: "Each pose shows clear steps, the mistakes that cause injury and an easier version.", visual: el("div", { class: "tour-visual pair" }, poseArt("virabhadrasana1", { size: "xl" }), avoidMock()) },
     { title: "A plan made for you.", text: "A short quiz finds your type and your health needs. Unsafe poses stay out of your plan.", visual: el("div", { class: "tour-visual pair" }, doshaMock(), journeyMock()) },
-    { title: "Guided sessions with a calm voice.", text: "Emma reads every step. A ring counts down each hold so you can keep your eyes off the screen.", visual: el("div", { class: "tour-visual" }, ringMock()) },
+    { title: "Guided sessions with a calm voice.", text: "Asana, pranayama, meditation in every practice. Emma reads every step while a ring counts down each hold.", visual: el("div", { class: "tour-visual" }, ringMock()) },
     { title: "Breathe.", text: "Seven breathing practices. The circle grows as you breathe in and shrinks as you breathe out.", visual: el("div", { class: "tour-visual" }, pacerPreview("big")) },
     { title: "Your progress, on your device.", text: "Rings, streaks and badges. Everything stays in this browser.", visual: el("div", { class: "tour-visual pair" }, el("div", { class: "mock" }, ringsSvg(SAMPLE_RINGS, 160)), sampleBadge) },
   ];
@@ -159,6 +159,16 @@ function creditRow(name, what, credit) {
     el("span", {}, who, url && " · ", url && el("a", { href: url, rel: "noopener" }, "Licence")));
 }
 
+function posePhotoCredits() {
+  return Object.entries(POSE_PHOTOS).map(([id, p]) => {
+    const name = POSE_BY_ID[id] ? POSE_BY_ID[id].en : `Sun salutation, position ${Number(id.split("-")[1]) + 1}`;
+    return el("li", { class: "credit" },
+      el("span", { class: "strong" }, name),
+      el("span", { class: "muted" }, p.alt),
+      el("span", {}, `${p.by}, ${p.licence} · `, el("a", { href: p.url, rel: "noopener" }, "View on Pexels")));
+  });
+}
+
 function renderCredits() {
   return el("div", { class: "page credits" },
     pageHead("Credits", "Photo and video credits.", "Every photo, video, figure and voice here has a licence that allows public use."),
@@ -166,6 +176,8 @@ function renderCredits() {
     el("ul", { class: "credit-list", role: "list" },
       creditRow("asanakit", "Pose illustrations", "Franz Enzenhofer, MIT licence, https://github.com/franzenzenhofer/asanakit"),
       creditRow("Emma", "Voice", "Recorded with Kokoro, Apache 2.0 licence")),
+    el("h2", { class: "block-title" }, "Pose photos"),
+    el("ul", { class: "credit-list", role: "list" }, posePhotoCredits()),
     el("h2", { class: "block-title" }, "Photos and videos"),
     el("ul", { class: "credit-list", role: "list" }, mediaCredits().map((m) => creditRow(m.alt, m.kind, m.credit))));
 }

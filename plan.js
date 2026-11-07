@@ -133,17 +133,17 @@ const DOSHAS = {
 // Health conditions. avoid lists pose ids, avoidBreaths lists breath ids.
 const CONDITIONS = {
   lowback: {
-    avoid: ["uttanasana", "paschimottanasana", "upavistha-konasana", "ardha-matsyendrasana", "janu-sirsasana", "navasana", "dhanurasana", "ushtrasana", "urdhva-mukha", "halasana", "sarvangasana", "prasarita", "parsvottanasana", "parivrtta-trikonasana", "tada-kapotasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana"],
-    avoidBreaths: [],
+    avoid: ["uttanasana", "paschimottanasana", "upavistha-konasana", "ardha-matsyendrasana", "janu-sirsasana", "navasana", "dhanurasana", "ushtrasana", "urdhva-mukha", "halasana", "sarvangasana", "prasarita", "parsvottanasana", "parivrtta-trikonasana", "tada-kapotasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana", "parivrtta-utkatasana", "parivrtta-parsvakonasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana", "marichyasana-a", "parivrtta-janu-sirsasana", "chakki-chalanasana", "anantasana"],
+    avoidBreaths: ["wood-chopping"],
     tip: "Bend your knees in every forward fold. Choose Reclined Hamstring Stretch over seated folds.",
   },
   neck: {
-    avoid: ["halasana", "sarvangasana", "setu-bandha", "ushtrasana", "dhanurasana", "ardha-pincha-mayurasana", "purvottanasana", "tiryak-bhujangasana", "matsyasana", "chakrasana"],
+    avoid: ["halasana", "sarvangasana", "setu-bandha", "ushtrasana", "dhanurasana", "ardha-pincha-mayurasana", "purvottanasana", "tiryak-bhujangasana", "matsyasana", "chakrasana", "ardha-chakrasana", "parsva-balasana"],
     avoidBreaths: [],
     tip: "Keep the neck in line with the spine. Look down rather than up in standing poses.",
   },
   knee: {
-    avoid: ["malasana", "vajrasana", "garudasana", "gomukhasana", "janu-sirsasana", "ushtrasana", "ananda-balasana", "dhanurasana", "baddha-konasana", "shashankasana", "kaliasana", "anjaneyasana", "ardha-hanumanasana", "skandasana", "tada-kapotasana", "eka-pada-rajakapotasana", "parighasana"],
+    avoid: ["malasana", "vajrasana", "garudasana", "gomukhasana", "janu-sirsasana", "ushtrasana", "ananda-balasana", "dhanurasana", "baddha-konasana", "shashankasana", "kaliasana", "anjaneyasana", "ardha-hanumanasana", "skandasana", "tada-kapotasana", "eka-pada-rajakapotasana", "parighasana", "uttana-pristhasana", "urdhva-prasarita-eka-padasana", "uttana-shishosana"],
     avoidBreaths: [],
     tip: "Pad the knees with a folded blanket. Keep the bend in Chair and Warrior poses small.",
   },
@@ -153,32 +153,32 @@ const CONDITIONS = {
     tip: "Do Cat-Cow on fists or forearms. In sun salutations, use a wall instead of the floor.",
   },
   shoulder: {
-    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana"],
+    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana", "uttana-shishosana", "parsva-balasana", "makara-adho-mukha"],
     avoidBreaths: [],
     tip: "Keep the arms below shoulder height when it hurts. Hands on hips is fine.",
   },
   highbp: {
-    avoid: ["prasarita", "uttanasana", "adho-mukha", "dhanurasana", "ushtrasana", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "matsyasana", "chakrasana"],
-    avoidBreaths: ["kapalabhati"],
+    avoid: ["prasarita", "uttanasana", "adho-mukha", "dhanurasana", "ushtrasana", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "matsyasana", "chakrasana", "urdhva-prasarita-eka-padasana", "ardha-chakrasana"],
+    avoidBreaths: ["kapalabhati", "surya-bhedana", "wood-chopping"],
     tip: "Keep the head above the heart. Never hold the breath. Skip every hold in breathing practices.",
   },
   lowbp: {
     avoid: ["ushtrasana", "ardha-chandrasana", "parivrtta-trikonasana", "matsyasana", "chakrasana"],
-    avoidBreaths: ["sheetali"],
+    avoidBreaths: ["sheetali", "chandra-bhedana", "sheetkari"],
     tip: "Come up slowly from forward folds and from lying down. In sun salutations, pause in each forward fold and rise on a slow breath.",
   },
   eyes: {
-    avoid: ["prasarita", "uttanasana", "adho-mukha", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "chakrasana"],
-    avoidBreaths: ["kapalabhati"],
+    avoid: ["prasarita", "uttanasana", "adho-mukha", "viparita-karani", "halasana", "sarvangasana", "parsvottanasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "bakasana", "chakrasana", "urdhva-prasarita-eka-padasana"],
+    avoidBreaths: ["kapalabhati", "trataka", "wood-chopping"],
     tip: "Avoid poses where the head hangs below the heart. In Child's Pose rest the forehead on stacked fists. Never hold the breath.",
   },
   pregnancy: {
-    avoid: ["navasana", "bhujangasana", "shalabhasana", "dhanurasana", "urdhva-mukha", "ardha-matsyendrasana", "jathara-parivartanasana", "pawanmuktasana", "ananda-balasana", "halasana", "sarvangasana", "viparita-karani", "adho-mukha", "phalakasana", "vasisthasana", "ushtrasana", "kati-chakrasana", "parivrtta-trikonasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "bakasana", "sarpasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana", "sucirandhrasana", "makarasana"],
-    avoidBreaths: ["kapalabhati"],
+    avoid: ["navasana", "bhujangasana", "shalabhasana", "dhanurasana", "urdhva-mukha", "ardha-matsyendrasana", "jathara-parivartanasana", "pawanmuktasana", "ananda-balasana", "halasana", "sarvangasana", "viparita-karani", "adho-mukha", "phalakasana", "vasisthasana", "ushtrasana", "kati-chakrasana", "parivrtta-trikonasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "bakasana", "sarpasana", "tiryak-bhujangasana", "chakrasana", "bharadvajasana", "sucirandhrasana", "makarasana", "parivrtta-utkatasana", "parivrtta-parsvakonasana", "ardha-shalabhasana", "salamba-bhujangasana", "chakki-chalanasana", "nauka-sanchalanasana", "uttanpadasana", "makara-adho-mukha", "supta-padangusthasana-b"],
+    avoidBreaths: ["kapalabhati", "surya-bhedana", "wood-chopping"],
     tip: "Please check with your doctor first. A prenatal teacher is the best guide. Skip every breath hold. Lie on your left side to relax.",
   },
   surgery: {
-    restOnly: true, avoid: [], avoidBreaths: ["kapalabhati"],
+    restOnly: true, avoid: [], avoidBreaths: ["kapalabhati", "wood-chopping"],
     tip: "Get your doctor's clearance before doing poses. Until then your plan is gentle breathing and relaxation only.",
   },
 };
@@ -214,7 +214,8 @@ function healthFilter(conditionIds) {
 
 /** True when every pose in a session is allowed. */
 function sessionIsSafe(session, avoid) {
-  return session.steps.every((s) => !s.p || !avoid.has(s.p));
+  if ((session.requires || []).some((id) => avoid.has(id))) return false;
+  return session.steps.every((s) => (!s.p || !avoid.has(s.p)) && !(s.uses || []).some((id) => avoid.has(id)));
 }
 
 // The player drops the whole sun salutation when any of these is avoided.
@@ -223,8 +224,9 @@ const SUN_STEP_POSES = ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha
 /** True when a session still works after the player leaves out unsafe poses:
  *  at least half its poses remain. */
 function sessionUsable(session, avoid) {
-  const poses = session.steps.filter((s) => s.p);
-  const out = poses.filter((s) => avoid.has(s.p)).length;
+  if ((session.requires || []).some((id) => avoid.has(id))) return false;
+  const poses = session.steps.filter((s) => s.p || s.uses);
+  const out = poses.filter((s) => (s.p ? avoid.has(s.p) : s.uses.some((id) => avoid.has(id)))).length;
   if (poses.length === 0) return true; // breathing or relaxation only
   return out < poses.length && out <= poses.length / 2;
 }

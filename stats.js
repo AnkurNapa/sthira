@@ -42,15 +42,16 @@ function periodTotals(store, period, today = new Date(), offset = 0, sameSpan = 
   const elapsed = dayNumber(today) - dayNumber(parseIso(periodRange(period, today).from));
   const capped = isoDate(addDays(parseIso(full.from), elapsed));
   const r = sameSpan && offset !== 0 && capped < full.to ? { ...full, to: capped } : full;
-  const out = { minutes: 0, breath: 0, sessions: 0, days: 0 };
+  const cats = emptyCats();
+  let days = 0;
   Object.entries(store.log).forEach(([date, e]) => {
     if (!inRange(date, r)) return;
-    out.minutes += e.s + e.b;
-    out.breath += e.b;
-    if (e.s + e.b > 0) out.days += 1;
+    APM_KEYS.forEach((k) => { cats[k] += e[k] || 0; });
+    if (dayTotal(e) > 0) days += 1;
   });
-  out.sessions = store.history.filter((h) => h.kind === "session" && h.done && inRange(h.date, r)).length;
-  return { minutes: Math.round(out.minutes), breath: Math.round(out.breath), sessions: out.sessions, days: out.days };
+  const sessions = store.history.filter((h) => h.kind === "session" && h.done && inRange(h.date, r)).length;
+  const minutes = Math.round(APM_KEYS.reduce((sum, k) => sum + cats[k], 0));
+  return { minutes, a: Math.round(cats.a), p: Math.round(cats.p), m: Math.round(cats.m), sessions, days };
 }
 
 /** Plain words for a change against the previous period. */
@@ -63,29 +64,26 @@ function changeText(now, before, period, unit) {
   return diff > 0 ? `${amount} more than this time last ${word}` : `${amount} fewer than this time last ${word}`;
 }
 
-/** Bars for the chart: days for a week or month, months for a year. Each has s and b minutes. */
+/** Bars for the chart: days for a week or month, months for a year. Each has a, p, m and r minutes. */
 function periodBars(store, period, today = new Date()) {
   const r = periodRange(period, today);
   if (period === "year") {
     const year = Number(r.from.slice(0, 4));
     return MONTHS_SHORT.map((label, m) => {
       const prefix = `${year}-${String(m + 1).padStart(2, "0")}`;
-      const bar = { label, key: prefix, s: 0, b: 0 };
+      const sums = emptyCats();
       Object.entries(store.log).forEach(([date, e]) => {
-        if (date.startsWith(prefix)) {
-          bar.s += e.s;
-          bar.b += e.b;
-        }
+        if (date.startsWith(prefix)) APM_KEYS.forEach((k) => { sums[k] += e[k] || 0; });
       });
-      return { ...bar, s: Math.round(bar.s), b: Math.round(bar.b) };
+      return { label, key: prefix, ...Object.fromEntries(APM_KEYS.map((k) => [k, Math.round(sums[k])])) };
     });
   }
   const bars = [];
   for (let d = parseIso(r.from); isoDate(d) <= r.to; d = addDays(d, 1)) {
     const key = isoDate(d);
-    const e = store.log[key] || { s: 0, b: 0 };
+    const e = store.log[key] || emptyCats();
     const label = period === "week" ? d.toLocaleDateString("en-GB", { weekday: "short" }) : String(d.getDate());
-    bars.push({ label, key, s: Math.round(e.s), b: Math.round(e.b) });
+    bars.push({ label, key, ...Object.fromEntries(APM_KEYS.map((k) => [k, Math.round(e[k] || 0)])) });
   }
   return bars;
 }
@@ -168,8 +166,8 @@ function exportData() {
 function mergeLogs(a, b) {
   const out = { ...a };
   Object.entries(b).forEach(([date, e]) => {
-    const prev = out[date] || { s: 0, b: 0 };
-    out[date] = { s: Math.max(prev.s, e.s), b: Math.max(prev.b, e.b) };
+    const prev = out[date] || emptyCats();
+    out[date] = Object.fromEntries(APM_KEYS.map((k) => [k, Math.max(prev[k] || 0, e[k] || 0)]));
   });
   return out;
 }

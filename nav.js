@@ -26,7 +26,7 @@ function navSections() {
       { title: "Breathing practices", links: BREATHS.map((b) => link(b.name, `#/breathe/${b.id}`)) },
       { title: "Start now", links: [link("One minute of calm", null, { action: () => openPacer(BREATH_BY_ID.abdominal, 6) }), link("All practices", "#/breathe")] },
     ],
-    learn: [{ title: "Guides", links: ARTICLES.map((a) => link(a.title, `#/learn/${a.id}`)) }],
+    learn: [{ title: "Guides", links: [...ARTICLES.map((a) => link(a.title, `#/learn/${a.id}`)), link("All guides", "#/learn")] }],
   };
 }
 
@@ -163,8 +163,8 @@ function menuTopLevel(panel, close) {
 
 function showSubmenu(panel, page, close) {
   const cols = navSections()[page.id];
-  const items = [el("a", { href: `#/${page.id}`, class: "menu-link", onclick: (e) => { e.preventDefault(); close(`#/${page.id}`); } }, `All of ${page.label}`),
-    ...cols.flatMap((col) => col.links.map((item) => el(item.href ? "a" : "button", { class: "menu-sublink", href: item.href || null, type: item.href ? null : "button", onclick: (e) => { e.preventDefault(); close(null, item); } }, item.label)))];
+  // Each section already has its own overview link, such as All poses, so there is no extra one here.
+  const items = cols.flatMap((col) => col.links.map((item) => el(item.href ? "a" : "button", { class: "menu-sublink", href: item.href || null, type: item.href ? null : "button", onclick: (e) => { e.preventDefault(); close(null, item); } }, item.label)));
   const back = el("button", { type: "button", class: "menu-back", onclick: () => { panel.replaceChildren(menuTopLevel(panel, close)); panel.querySelector(".menu-link").focus(); } }, icon("back", 18), "Menu");
   panel.replaceChildren(el("div", { class: "menu-level sub" }, back, el("p", { class: "menu-heading" }, page.label), menuList(items)));
   back.focus();

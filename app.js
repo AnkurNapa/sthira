@@ -65,11 +65,14 @@ function openRouteSheet(key) {
   return ROUTE_SHOW[page](id, key);
 }
 
-/** Make the open sheets match the route: close the ones above it, open it if missing. */
+/**
+ * Make the open sheets match the route. One detail replaces another rather than stacking.
+ * Back returns to the previous detail because each one has its own history entry.
+ */
 function syncRouteSheets(key) {
   const routeSheets = sheetStack.filter((s) => s.routeKey);
   const match = key ? routeSheets.findIndex((s) => s.routeKey === key) : -1;
-  if (match >= 0 || !key) routeSheets.slice(match + 1).reverse().forEach((s) => s.close(true, true));
+  routeSheets.slice(match + 1).reverse().forEach((s) => s.close(true, true));
   if (key && match < 0) {
     const entry = openRouteSheet(key);
     if (entry) entry.pushed = booted;
