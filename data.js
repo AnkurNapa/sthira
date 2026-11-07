@@ -511,7 +511,7 @@ const POSES = [
   },
   {
     id: "eka-pada-rajakapotasana", sk: "Eka Pada Rajakapotasana", en: "Pigeon Pose", cat: "backbend", lvl: 2, sided: true,
-    steps: ["From Downward Dog, bring the right knee forward behind the right wrist.", "Lay the right shin on the floor. Keep the right foot near the left hip if the knee feels tight.", "Slide the left leg straight back. Point the left toes back.", "Place a cushion under the right hip if it does not reach the floor.", "Lift the chest. Or fold forward over the front leg with the forearms down."],
+    steps: ["From hands and knees, bring the right knee forward behind the right wrist.", "Lay the right shin on the floor. Keep the right foot near the left hip if the knee feels tight.", "Slide the left leg straight back. Point the left toes back.", "Place a cushion under the right hip if it does not reach the floor.", "Lift the chest. Or fold forward over the front leg with the forearms down."],
     avoid: ["Pushing through pain in the front knee. Bring the foot closer to the hip or come out.", "Letting the body tip onto the right hip. Support it so the hips stay level."],
     easier: "Do Reclined Figure Four on your back instead.",
     benefits: "Opens the outer hips. Stretches the hip flexors of the back leg.",
@@ -711,7 +711,7 @@ const SESSIONS = [
     steps: [
       "Seated", { t: "Neck release", say: "Sit tall. Drop the right ear towards the right shoulder. Breathe. Then slowly switch sides. Never roll the head backwards.", s: 60 },
       { t: "Shoulder rolls", say: "Roll the shoulders up, back and down. Slow circles with the breath.", s: 40 },
-      { t: "Seated twist", say: "Sit tall. Place the left hand on the right knee. Turn gently to the right. Switch sides halfway.", s: 60 },
+      { t: "Seated twist", uses: ["bharadvajasana"], say: "Sit tall. Place the left hand on the right knee. Turn gently to the right. Switch sides halfway.", s: 60 },
       "Standing", { p: "ardha-kati-chakrasana", b: 4 }, { p: "uttanasana", b: 5 }, { p: "tadasana", b: 5 },
       "Breathing", { t: "Three slow breaths", say: "Breathe in for four. Breathe out for six. Let the shoulders drop on every out breath.", s: 40 },
       "Meditation", { t: "One minute of stillness", say: "Close the eyes. Sit still. Simply notice the breath for one minute before you go back to your day.", s: 60 },
@@ -1008,7 +1008,7 @@ const MORE_POSES = [
   },
   {
     id: "uttana-pristhasana", sk: "Uttana Pristhasana", en: "Lizard Pose", cat: "standing", lvl: 2, sided: true,
-    steps: ["From Downward Dog, step the right foot forward just beyond the right hand.", "Lower the left knee onto a folded blanket.", "Walk the right foot a little wider. Point the right toes slightly out.", "Stay on the hands. Lower to the forearms only if the hips feel open.", "Keep the chest long. Breathe into the right hip."],
+    steps: ["From hands and knees, step the right foot forward just outside the right hand.", "Lower the left knee onto a folded blanket.", "Walk the right foot a little wider. Point the right toes slightly out.", "Stay on the hands. Lower to the forearms only if the hips feel open.", "Keep the chest long. Breathe into the right hip."],
     avoid: ["Front knee rolling in. Keep it over the ankle.", "Hanging in the shoulders. Press the floor away."],
     easier: "Rest the forearms on blocks or books. Keep the back knee down.",
     benefits: "Opens the hips and groin. Stretches the hip flexors of the back leg.",
@@ -1516,7 +1516,7 @@ const MORE_SESSIONS = [
       { t: "Three more rounds", say: "Flow through three more rounds at your own pace. Change the leading leg each time. One movement for each breath. Rest in Child's Pose whenever you need.", s: 210 },
       { t: "Stand still", say: "Stand with the eyes closed. Feel the breath slow down. Feel the heartbeat settle.", s: 30 },
       "Floor", { p: "salamba-bhujangasana", b: 5 }, { p: "shashankasana", b: 5 }, { p: "sucirandhrasana", b: 6 }, { p: "supta-padangusthasana", b: 6 }, { p: "supta-padangusthasana-b", b: 6 }, { p: "jathara-parivartanasana", b: 6 }, { p: "viparita-karani", b: 20 },
-      "Breathing", { t: "Left nostril breathing", say: "Sit tall. Close the right nostril with the right thumb. Breathe in through the left. Close the left nostril. Breathe out through the right. Keep going at an easy pace. If you have low blood pressure, breathe through both nostrils instead.", s: 120 },
+      "Breathing", { t: "Left nostril breathing", breath: "chandra-bhedana", say: "Sit tall. Close the right nostril with the right thumb. Breathe in through the left. Close the left nostril. Breathe out through the right. Keep going at an easy pace. If you have low blood pressure, breathe through both nostrils instead.", s: 120 },
       "Meditation", MED.light,
       "Relaxation", { p: "savasana", b: 35 },
       "Closing", CLOSE_STEP,
@@ -1529,7 +1529,7 @@ const MORE_SESSIONS = [
       "Opening", OPEN_STEP,
       "Centring", { p: "sukhasana", b: 6 },
       "Seated", { p: "parsva-sukhasana", b: 4 },
-      { t: "Seated twist", say: "Sit tall. Breathe in and lengthen. Breathe out and turn gently to the right with the left hand on the right knee. Breathe in back to centre. Breathe out to the left. Keep moving side to side with the breath.", s: 60 },
+      { t: "Seated twist", uses: ["bharadvajasana"], say: "Sit tall. Breathe in and lengthen. Breathe out and turn gently to the right with the left hand on the right knee. Breathe in back to centre. Breathe out to the left. Keep moving side to side with the breath.", s: 60 },
       { p: "chakki-chalanasana", b: 8 }, { p: "nauka-sanchalanasana", b: 8 },
       "Hands and knees", { p: "marjari", b: 8 }, { p: "parsva-balasana", b: 4 }, { p: "vyaghrasana", b: 4 },
       { t: "Child's Pose to Cobra", uses: ["shashankasana", "bhujangasana"], say: "Start in Child's Pose with the arms forward. Breathe in. Slide forward into a low Cobra with the hips on the floor. Breathe out. Press back to Child's Pose. Keep flowing with the breath.", s: 60 },
@@ -1557,7 +1557,7 @@ const MORE_SESSIONS = [
     ],
   },
   {
-    id: "salutations-ab", requires: ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha", "utkatasana", "virabhadrasana1"], name: "Sun Salutations A and B", lvl: 2, focus: "Heat and rhythm", color: "#FF9F0A",
+    id: "salutations-ab", requires: ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha", "utkatasana", "virabhadrasana1", "anjaneyasana"], name: "Sun Salutations A and B", lvl: 2, focus: "Heat and rhythm", color: "#FF9F0A",
     about: "Learn the two Ashtanga sun salutations with one teaching round each, then flowing rounds. Lower the knees whenever you need.",
     steps: [
       "Opening", OPEN_STEP,

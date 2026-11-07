@@ -2,6 +2,22 @@
 
 All notable changes to Sthira. Versions follow docs/RELEASE.md.
 
+## 0.3.3 (7 November 2026)
+
+### Safety
+- Saved plans are rebuilt from your answers on every visit, so every safety fix reaches you straight away.
+- Breathing practices your plan avoids can no longer be started.
+- Knee plans leave out the kneeling lunge in sun salutations and Tree Pose. Seated twist steps and imported flows respect your plan.
+
+### Added
+- Key alignment cues for every pose, spoken during each hold and shown on screen and on pose pages.
+- Calm background music: singing bowls by default, Om chanting, ambient, flute, rain and ocean.
+- Real photos for 15 more poses. Poses without a photo show a calm name card instead of a drawing.
+
+### Fixed
+- 25 issues from a full test pass, including double taps, Back during a session, saving when you leave mid session, small screens and offline photos.
+- The page name shows in the top bar instead of a second Sthira.
+
 ## 0.3.2 (7 November 2026)
 
 ### Safety

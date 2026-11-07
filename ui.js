@@ -2,6 +2,7 @@
 "use strict";
 
 const SHEET_MS = 380;
+const BACKDROP_GUARD_MS = 400;
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 function el(tag, props, ...kids) {
@@ -115,11 +116,18 @@ function syncSheets() {
  */
 function openSheet(body, opts = {}) {
   const returnFocus = document.activeElement;
-  const entry = { routeKey: opts.routeKey || null, pushed: false, closed: false };
-  entry.close = (force, fromRouter) => {
+  const openedAt = Date.now();
+  const entry = { routeKey: opts.routeKey || null, pushed: false, closed: false, beforeClose: opts.beforeClose || null, historyOpen: false };
+  // internal: true when the router (route sheets) or the Back button (history sheets) asked for the close.
+  entry.close = (force, internal) => {
     if (entry.closed || (!force && opts.beforeClose && opts.beforeClose() === false)) return;
-    if (entry.routeKey && !fromRouter) {
+    if (entry.routeKey && !internal) {
       leaveRoute(entry);
+      return;
+    }
+    if (entry.historyOpen && !internal) {
+      entry.leaving = true;
+      history.back();
       return;
     }
     entry.closed = true;
@@ -135,7 +143,14 @@ function openSheet(body, opts = {}) {
     el("button", { type: "button", class: "link-btn", onclick: () => entry.close() }, "Done"));
   const cls = ["sheet-panel", opts.full && "full", opts.dark && "dark"].filter(Boolean).join(" ");
   const panel = el("div", { class: cls, role: "dialog", "aria-modal": "true", "aria-label": opts.label || "Sthira", tabindex: "-1" }, bar, body);
-  entry.root = el("div", { class: `sheet${opts.full ? " sheet-full" : ""}` }, el("div", { class: "sheet-backdrop", onclick: () => entry.close() }), panel);
+  // A second click of a double click lands on the new backdrop. Ignore clicks just after opening.
+  const onBackdrop = () => { if (Date.now() - openedAt >= BACKDROP_GUARD_MS) entry.close(); };
+  entry.root = el("div", { class: `sheet${opts.full ? " sheet-full" : ""}` }, el("div", { class: "sheet-backdrop", onclick: onBackdrop }), panel);
+  if (opts.history) {
+    // Full screen players take a history entry, so the Back button closes them like any page.
+    history.pushState({ ...(history.state || {}), overlay: true }, "", location.href);
+    entry.historyOpen = true;
+  }
   document.body.append(entry.root);
   sheetStack.push(entry);
   syncSheets();
@@ -144,6 +159,17 @@ function openSheet(body, opts = {}) {
   panel.focus({ preventScroll: true });
   return entry;
 }
+
+window.addEventListener("popstate", () => {
+  const top = [...sheetStack].reverse().find((s) => s.historyOpen);
+  if (!top) return;
+  if (!top.leaving && top.beforeClose && top.beforeClose() === false) {
+    history.pushState({ ...(history.state || {}), overlay: true }, "", location.href);
+    return;
+  }
+  top.historyOpen = false;
+  top.close(true, true);
+});
 
 const FOCUSABLE = 'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea, summary, [tabindex]:not([tabindex="-1"])';
 
@@ -307,36 +333,25 @@ function ringsSvg(rings, size = 120) {
   return svg;
 }
 
-// Figure files in figures/. Poses without a photo or a figure show the category letter tile.
-const FIGURE_IDS = new Set([
-  "adho-mukha", "anjaneyasana", "ardha-chandrasana", "ardha-matsyendrasana", "ardha-pincha-mayurasana",
-  "ardha-uttanasana", "baddha-konasana", "bakasana", "bharadvajasana", "bhujangasana", "chakrasana", "chaturanga",
-  "dandasana", "dhanurasana", "eka-pada-rajakapotasana", "garudasana", "gomukhasana", "halasana", "janu-sirsasana",
-  "kaliasana", "makarasana", "malasana", "marjari", "natarajasana", "navasana", "parighasana",
-  "parivrtta-trikonasana", "parsvakonasana", "parsvottanasana", "paschimottanasana", "pawanmuktasana",
-  "phalakasana", "prasarita", "purvottanasana", "savasana", "setu-bandha", "shalabhasana", "shashankasana",
-  "skandasana", "sukhasana", "supta-padangusthasana", "surya-0", "surya-1", "surya-10", "surya-11", "surya-2",
-  "surya-3", "surya-4", "surya-5", "surya-6", "surya-7", "surya-8", "surya-9", "tadasana", "trikonasana",
-  "upavistha-konasana", "urdhva-mukha", "ushtrasana", "utkatasana", "uttanasana", "utthita-hasta-padangusthasana",
-  "vajrasana", "vasisthasana", "viparita-karani", "viparita-virabhadrasana", "virabhadrasana1", "virabhadrasana2",
-  "virabhadrasana3", "vrikshasana", "vyaghrasana",
-]);
 const ART_PX = { "": 40, lg: 60, xl: 220, player: 200 };
-
-function poseTile(id, size) {
-  const pose = POSE_BY_ID[id];
-  if (!pose) return tile("S", "var(--accent)", size === "xl" ? "xl" : size);
-  return tile(pose.en[0], CATEGORIES[pose.cat].color, size === "xl" ? "xl" : size);
-}
-
-/**
- * Art for a pose or a sun position (surya-0 to surya-11).
- * Order: a real photo from photos/poses, then the asanakit figure, then the category letter tile.
- * opts: { size: "lg" | "xl" | "player" | "", figureOnly: true to return null instead of a tile }
- */
 const SMALL_ART = ["", "lg"];
 
-const hasPoseArt = (id) => Boolean(POSE_PHOTOS[id]) || FIGURE_IDS.has(id);
+/** The Sanskrit name and category colour of a pose or a sun position (surya-0 to surya-11). */
+function artInfo(id) {
+  if (own(POSE_BY_ID, id)) return { name: POSE_BY_ID[id].sk, color: CATEGORIES[POSE_BY_ID[id].cat].color };
+  const m = /^surya-(\d+)$/.exec(id);
+  const pos = m ? SURYA[Number(m[1])] : null;
+  return { name: pos ? pos[0] : "", color: "var(--accent)" };
+}
+
+/** A calm card for a pose with no photo: the Sanskrit name on a soft panel in the category colour. */
+function noPhotoCard(id, size) {
+  const info = artInfo(id);
+  const card = el("span", { class: `pose-art pose-nophoto pose-art-${size || "md"}`, "aria-hidden": "true" },
+    SMALL_ART.includes(size) ? null : el("span", { class: "nophoto-name" }, info.name));
+  card.style.setProperty("--c", info.color);
+  return card;
+}
 
 function posePhoto(id, size) {
   const p = POSE_PHOTOS[id];
@@ -344,17 +359,21 @@ function posePhoto(id, size) {
   const small = SMALL_ART.includes(size);
   const dir = "photos/poses/";
   const srcset = small ? `${dir}${p.base}-400.webp 400w` : `${dir}${p.base}-400.webp 400w, ${dir}${p.base}-800.webp 800w`;
-  return el("picture", { class: `pose-art pose-photo pose-art-${size || "md"}` },
-    el("source", { type: "image/webp", srcset, sizes: `${px}px` }),
-    el("img", { src: `${dir}${p.base}-800.jpg`, alt: p.alt, width: px, height: Math.round((px * p.h) / p.w), loading: small ? "lazy" : "eager", decoding: "async" }));
+  const img = el("img", { src: `${dir}${p.base}-800.jpg`, alt: p.alt, width: px, height: Math.round((px * p.h) / p.w), loading: small ? "lazy" : "eager", decoding: "async" });
+  const pic = el("picture", { class: `pose-art pose-photo pose-art-${size || "md"}` },
+    el("source", { type: "image/webp", srcset, sizes: `${px}px` }), img);
+  // A photo that cannot load (offline and not cached) becomes the calm card, never a broken icon.
+  img.addEventListener("error", () => pic.replaceWith(noPhotoCard(id, size)), { once: true });
+  return pic;
 }
 
+/**
+ * Art for a pose or a sun position: the real photo when there is one, else the calm no photo card.
+ * opts: { size: "lg" | "xl" | "player" | "" }
+ */
 function poseArt(id, opts = {}) {
   const size = opts.size || "";
-  if (POSE_PHOTOS[id]) return posePhoto(id, size);
-  if (!FIGURE_IDS.has(id)) return opts.figureOnly ? null : poseTile(id, size === "player" ? "xl" : size);
-  const px = ART_PX[size] || ART_PX[""];
-  return el("img", { class: `pose-art pose-fig pose-art-${size || "md"}`, src: `figures/${id}.svg`, alt: "", width: px, height: px, decoding: "async", loading: size === "xl" || size === "player" ? "eager" : "lazy" });
+  return own(POSE_PHOTOS, id) ? posePhoto(id, size) : noPhotoCard(id, size);
 }
 
 /* APM display */

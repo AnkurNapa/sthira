@@ -52,7 +52,7 @@ function tourPanels() {
   const sampleBadge = el("div", { class: "mock badge-mock" },
     el("span", { class: "badge-icon won" }, icon("star", 22)), el("span", { class: "strong" }, "Three days"), el("span", { class: "muted small" }, "You practised three days in a row."));
   return [
-    { title: "Learn every pose safely.", text: "Each pose shows clear steps, the mistakes that cause injury and an easier version.", visual: el("div", { class: "tour-visual pair" }, poseArt("virabhadrasana1", { size: "xl" }), avoidMock()) },
+    { title: "Learn every pose safely.", text: "Each pose shows clear steps, the mistakes that cause injury and an easier version.", visual: el("div", { class: "tour-visual pair" }, poseArt("virabhadrasana2", { size: "xl" }), avoidMock()) },
     { title: "A plan made for you.", text: "A short quiz finds your type and your health needs. Unsafe poses stay out of your plan.", visual: el("div", { class: "tour-visual pair" }, doshaMock(), journeyMock()) },
     { title: "Guided sessions with a calm voice.", text: "Asana, pranayama, meditation in every practice. Emma reads every step while a ring counts down each hold.", visual: el("div", { class: "tour-visual" }, ringMock()) },
     { title: "Breathe.", text: "Seven breathing practices. The circle grows as you breathe in and shrinks as you breathe out.", visual: el("div", { class: "tour-visual" }, pacerPreview("big")) },
@@ -169,13 +169,20 @@ function posePhotoCredits() {
   });
 }
 
+function musicCredits() {
+  const list = el("ul", { class: "credit-list", role: "list" });
+  musicTracks().then((tracks) => list.replaceChildren(...tracks.map((t) => creditRow(t.name, "Music", `${t.credit}, ${t.source}`))));
+  return list;
+}
+
 function renderCredits() {
   return el("div", { class: "page credits" },
     pageHead("Credits", "Photo and video credits.", "Every photo, video, figure and voice here has a licence that allows public use."),
-    el("h2", { class: "block-title" }, "Figures and voice"),
+    el("h2", { class: "block-title" }, "Voice"),
     el("ul", { class: "credit-list", role: "list" },
-      creditRow("asanakit", "Pose illustrations", "Franz Enzenhofer, MIT licence, https://github.com/franzenzenhofer/asanakit"),
       creditRow("Emma", "Voice", "Recorded with Kokoro, Apache 2.0 licence")),
+    el("h2", { class: "block-title" }, "Music"),
+    musicCredits(),
     el("h2", { class: "block-title" }, "Pose photos"),
     el("ul", { class: "credit-list", role: "list" }, posePhotoCredits()),
     el("h2", { class: "block-title" }, "Photos and videos"),

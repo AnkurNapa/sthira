@@ -71,8 +71,18 @@ function generatorPanel() {
 
 /* My flows */
 
+/**
+ * Turn any flow into builder items. Poses stay editable. Sun salutations, breathing, meditation
+ * and the opening and closing rituals are kept as fixed items so nothing is lost on save.
+ */
 function flowForEditing(flow) {
-  const steps = flow.steps.filter((st) => st && st.p).map((st) => ({ p: st.p, b: st.b }));
+  let phase = "Sequence";
+  const steps = [];
+  flow.steps.forEach((st) => {
+    if (typeof st === "string") phase = st;
+    else if (st && st.p) steps.push({ p: st.p, b: st.b, phase });
+    else if (st && (st.sun || st.t)) steps.push({ fixed: st, phase });
+  });
   return { id: flow.custom ? flow.id : "", name: flow.custom ? flow.name : `My ${flow.name.toLowerCase()}`, steps };
 }
 
@@ -149,52 +159,96 @@ function stepper(value, onChange, label) {
     el("button", { type: "button", class: "step-btn", "aria-label": `More breaths for ${label}`, onclick: () => { current = clamp(current + 1, BUILDER_BREATHS.min, BUILDER_BREATHS.max); set(current); } }, "+"));
 }
 
+// New poses go before these parts so the order stays asana, pranayama, meditation, rest.
+const TAIL_PHASES = ["Breathing", "Meditation", "Relaxation", "Closing"];
+
+function fixedLabel(item) {
+  const st = item.fixed;
+  if (st.sun) return `Sun salutation, ${plural(st.sun, "round")}`;
+  return st.t === item.phase ? st.t : `${item.phase}: ${st.t}`;
+}
+
 function openBuilder(initial) {
   let draft = { id: initial.id, name: initial.name, steps: initial.steps.map((st) => ({ ...st })) };
+  let dirty = false;
   let lib = { q: "", cat: "all" };
   const listEl = el("ol", { class: "builder-list" });
   const libEl = el("div", { class: "builder-lib-results" });
   const nameInput = el("input", { type: "text", class: "text-input", value: draft.name, placeholder: "Name your flow", "aria-label": "Flow name", maxlength: "60" });
-  nameInput.addEventListener("input", () => { draft = { ...draft, name: nameInput.value }; });
+  nameInput.addEventListener("input", () => { draft = { ...draft, name: nameInput.value }; dirty = true; });
   const summary = el("p", { class: "muted", "aria-live": "polite" });
 
   const setSteps = (steps) => {
     draft = { ...draft, steps };
+    dirty = true;
     paintList();
   };
 
-  function builderRow(st, i) {
-    const pose = POSE_BY_ID[st.p];
-    const reason = planContext().avoid.has(pose.id) ? avoidReason(pose.id, "pose") : "";
+  const tailIndex = (phases) => {
+    const i = draft.steps.findIndex((st) => phases.includes(st.phase));
+    return i < 0 ? draft.steps.length : i;
+  };
+
+  function insertPose(p, b) {
+    const at = tailIndex(TAIL_PHASES);
+    const prev = draft.steps[at - 1];
+    const phase = prev && !TAIL_PHASES.includes(prev.phase) ? prev.phase : draft.steps.length ? "Poses" : "Sequence";
+    setSteps([...draft.steps.slice(0, at), { p, b, phase }, ...draft.steps.slice(at)]);
+  }
+
+  function addSavasana() {
+    const at = tailIndex(["Closing"]);
+    setSteps([...draft.steps.slice(0, at), { p: "savasana", b: SAVASANA_BREATHS, phase: "Relaxation" }, ...draft.steps.slice(at)]);
+  }
+
+  function rowActions(label, i) {
     const move = (to) => {
       const steps = [...draft.steps];
       [steps[i], steps[to]] = [steps[to], steps[i]];
       setSteps(steps);
       listEl.querySelectorAll(".builder-item")[to].querySelector(i < to ? ".move-down" : ".move-up").focus();
     };
+    return el("div", { class: "builder-actions" },
+      el("button", { type: "button", class: "pill small pill-ghost move-up", disabled: i === 0 ? true : null, "aria-label": `Move ${label} up`, onclick: () => move(i - 1) }, "Up"),
+      el("button", { type: "button", class: "pill small pill-ghost move-down", disabled: i === draft.steps.length - 1 ? true : null, "aria-label": `Move ${label} down`, onclick: () => move(i + 1) }, "Down"),
+      el("button", { type: "button", class: "pill small pill-ghost", "aria-label": `Remove ${label}`, onclick: () => setSteps(draft.steps.filter((_, j) => j !== i)) }, "Remove"));
+  }
+
+  function fixedRow(item, i) {
+    const label = fixedLabel(item);
+    const secs = sessionSecs({ steps: [item.fixed] }, settings().breathSecs);
+    return el("li", { class: "builder-item fixed" },
+      el("div", { class: "builder-main" },
+        el("span", { class: "builder-text" }, el("span", { class: "row-title" }, label), el("span", { class: "row-sub" }, `Fixed step · ${fmtDur(secs)}`))),
+      rowActions(label, i));
+  }
+
+  function builderRow(st, i) {
+    if (st.fixed) return fixedRow(st, i);
+    const pose = POSE_BY_ID[st.p];
+    const reason = planContext().avoid.has(pose.id) ? avoidReason(pose.id, "pose") : "";
     return el("li", { class: "builder-item" },
       el("div", { class: "builder-main" },
         poseArt(pose.id),
         el("span", { class: "builder-text" }, el("span", { class: "row-title" }, pose.en), el("span", { class: "row-sub" }, `${pose.sk}${pose.sided ? " · each side" : ""}`)),
-        stepper(st.b, (b) => { draft = { ...draft, steps: draft.steps.map((x, j) => (j === i ? { ...x, b } : x)) }; paintSummary(); }, pose.en)),
+        stepper(st.b, (b) => { draft = { ...draft, steps: draft.steps.map((x, j) => (j === i ? { ...x, b } : x)) }; dirty = true; paintSummary(); }, pose.en)),
       reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}. It will be left out when you practise.`),
-      el("div", { class: "builder-actions" },
-        el("button", { type: "button", class: "pill small pill-ghost move-up", disabled: i === 0 ? true : null, "aria-label": `Move ${pose.en} up`, onclick: () => move(i - 1) }, "Up"),
-        el("button", { type: "button", class: "pill small pill-ghost move-down", disabled: i === draft.steps.length - 1 ? true : null, "aria-label": `Move ${pose.en} down`, onclick: () => move(i + 1) }, "Down"),
-        el("button", { type: "button", class: "pill small pill-ghost", "aria-label": `Remove ${pose.en}`, onclick: () => setSteps(draft.steps.filter((_, j) => j !== i)) }, "Remove")));
+      rowActions(pose.en, i));
   }
 
+  const asSteps = () => draft.steps.map((st) => st.fixed || { p: st.p, b: st.b });
+
   function paintSummary() {
-    const secs = sessionSecs({ steps: draft.steps }, settings().breathSecs);
-    summary.textContent = draft.steps.length ? `${plural(draft.steps.length, "pose")} · about ${fmtMinutes(secs)}` : "No poses yet. Add some from the library below.";
+    const poses = draft.steps.filter((st) => st.p).length;
+    const secs = sessionSecs({ steps: asSteps() }, settings().breathSecs);
+    summary.textContent = draft.steps.length ? `${plural(poses, "pose")} · about ${fmtMinutes(secs)}` : "No poses yet. Add some from the library below.";
   }
 
   function paintList() {
     listEl.replaceChildren(...draft.steps.map(builderRow));
-    const last = draft.steps[draft.steps.length - 1];
-    if (draft.steps.length && (!last || last.p !== "savasana")) {
+    if (draft.steps.some((st) => st.p) && !draft.steps.some((st) => st.p === "savasana")) {
       listEl.append(el("li", { class: "note caution-note savasana-offer" }, "A flow should end with relaxation.",
-        el("button", { type: "button", class: "pill small", onclick: () => setSteps([...draft.steps, { p: "savasana", b: SAVASANA_BREATHS }]) }, "Add Savasana")));
+        el("button", { type: "button", class: "pill small", onclick: addSavasana }, "Add Savasana")));
     }
     paintSummary();
   }
@@ -207,7 +261,7 @@ function openBuilder(initial) {
         lead: poseArt(p.id), title: p.en, sub: `${p.sk} · ${LEVELS[p.lvl]}`,
         badge: planContext().avoid.has(p.id) ? cautionBadge() : null,
         detail: "Add",
-        onClick: () => { setSteps([...draft.steps, { p: p.id, b: BUILDER_BREATHS.start }]); showToast(`${p.en} added.`); },
+        onClick: () => { insertPose(p.id, BUILDER_BREATHS.start); showToast(`${p.en} added.`); },
       })))
       : emptyState("No poses match.", "Try another word or category."));
   }
@@ -215,15 +269,30 @@ function openBuilder(initial) {
   const search = el("input", { type: "search", class: "search", placeholder: "Search poses", "aria-label": "Search the pose library" });
   search.addEventListener("input", () => { lib = { ...lib, q: search.value }; paintLib(); });
 
+  /** Steps with a phase name before each change of phase, the shape the player reads. */
+  function withPhases() {
+    const out = [];
+    let last = null;
+    draft.steps.forEach((st) => {
+      const phase = st.phase || "Sequence";
+      if (phase !== last) out.push(phase);
+      last = phase;
+      out.push(st.fixed || { p: st.p, b: st.b });
+    });
+    return out;
+  }
+
   function save() {
     const name = draft.name.trim() || "My flow";
-    if (!draft.steps.length) {
+    const poses = draft.steps.filter((st) => st.p);
+    if (!poses.length) {
       showToast("Add at least one pose first.");
       return;
     }
-    const maxLvl = Math.max(...draft.steps.map((st) => POSE_BY_ID[st.p].lvl));
-    const saved = saveFlow({ id: draft.id, name, lvl: maxLvl, color: "#E8743B", focus: "My own sequence", about: "A sequence you built yourself.", steps: ["Sequence", ...draft.steps] });
+    const maxLvl = Math.max(...poses.map((st) => POSE_BY_ID[st.p].lvl));
+    const saved = saveFlow({ id: draft.id, name, lvl: maxLvl, color: "#E8743B", focus: "My own sequence", about: "A sequence you built yourself.", steps: withPhases() });
     if (!saved) return;
+    dirty = false;
     sheet.close(true);
     refreshView();
     showToast(`${saved.name} saved.`);
@@ -239,7 +308,11 @@ function openBuilder(initial) {
     sectionTitle("Add poses"),
     el("label", { class: "search-wrap" }, icon("search", 18), search),
     chipRow("Category", [["all", "All"], ...Object.entries(CATEGORIES).map(([k, c]) => [k, c.name])], "all", (v) => { lib = { ...lib, cat: v }; paintLib(); }),
-    libEl), { label: draft.id ? "Edit flow" : "Build your own" });
+    libEl), {
+    label: draft.id ? "Edit flow" : "Build your own",
+    // Closing with unsaved changes asks first, so a draft is never lost by accident.
+    beforeClose: () => !dirty || window.confirm("Discard the changes to this flow?"),
+  });
   paintList();
   paintLib();
 }

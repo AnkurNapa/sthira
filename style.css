@@ -1312,8 +1312,16 @@ h3 {
 }
 
 .article-card-title { font-size: 1.25rem; font-weight: 600; }
-.article-icon { margin: 0; font-size: 2rem; line-height: 1.2; }
-.article-icon.big { font-size: 3rem; }
+.article-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0 0 0.5rem;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
 
 .pacer-preview {
   display: grid;
@@ -1736,6 +1744,8 @@ button.toast { cursor: pointer; }
 .switch:checked { background: #34c759; }
 .switch:checked::after { transform: translateX(1.25rem); }
 
+.range { width: 45%; accent-color: var(--pill-bg); }
+
 .select {
   min-height: 2.25rem;
   max-width: 50%;
@@ -1749,12 +1759,13 @@ button.toast { cursor: pointer; }
 
 /* Player and pacer */
 
+/* Three rows: top bar, the step (scrolls if it must) and the controls, which always stay on screen. */
 .player {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  min-height: 100%;
-  padding: calc(env(safe-area-inset-top) + 1rem) var(--gutter) calc(env(safe-area-inset-bottom) + 1.5rem);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: clamp(0.5rem, 2dvh, 1rem);
+  height: 100%;
+  padding: calc(env(safe-area-inset-top) + clamp(0.5rem, 2dvh, 1rem)) var(--gutter) calc(env(safe-area-inset-bottom) + clamp(0.75rem, 3dvh, 1.5rem));
   background: radial-gradient(ellipse 90% 60% at 50% 35%, #22140c 0%, #000000 70%);
 }
 
@@ -1793,9 +1804,26 @@ button.toast { cursor: pointer; }
 
 .ring-wrap {
   position: relative;
-  width: min(62vw, 16rem);
+  width: min(62vw, 16rem, 30dvh);
   aspect-ratio: 1;
 }
+
+.player > .done-view { grid-row: 1 / -1; }
+
+.player-main {
+  overflow-y: auto;
+  min-height: 0;
+  justify-content: safe center;
+  overscroll-behavior: contain;
+}
+
+.player-align { margin: 0.75rem auto 0; max-width: 32rem; text-align: left; }
+.player-align:empty { display: none; }
+.align-title { margin: 0 0 0.25rem; color: var(--text-2); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.align-list { margin: 0; padding-left: 1.25rem; color: var(--text-2); font-size: 0.9375rem; }
+.align-list li { transition: color 0.3s; }
+.align-list li + li { margin-top: 0.25rem; }
+.align-list li.speaking { color: var(--text); font-weight: 600; }
 
 .ring { width: 100%; height: 100%; }
 .ring-track { fill: none; stroke: rgba(255, 255, 255, 0.12); stroke-width: 6; }
@@ -1858,8 +1886,11 @@ button.toast { cursor: pointer; }
 
 .player-art { display: flex; }
 .player-art:empty { display: none; }
-.player-visual .pose-art-player { width: min(13rem, 42vw, 30vh); }
-.player-visual.has-art .ring-wrap { width: min(13rem, 40vw, 30vh); }
+.player-visual .pose-art-player { width: min(13rem, 42vw, 26dvh); }
+.player-visual.has-art .ring-wrap { width: min(13rem, 40vw, 26dvh); }
+
+.media.is-broken { display: block; min-height: 8rem; background: var(--surface); }
+.media.is-broken img { visibility: hidden; }
 
 
 .player-bottom {
@@ -1902,7 +1933,7 @@ button.toast { cursor: pointer; }
 
 .pacer-stage {
   position: relative;
-  width: min(76vw, 20rem);
+  width: min(76vw, 20rem, 42dvh);
   aspect-ratio: 1;
 }
 
@@ -2363,12 +2394,35 @@ button.toast { cursor: pointer; }
   .pose-fig { filter: invert(1) hue-rotate(180deg); }
 }
 
-/* Photos sit in the same rounded frame as figures. They are never inverted. */
+/* Photos and the no photo card share one rounded frame, so grids stay aligned. Photos are never inverted. */
 .pose-photo { display: block; overflow: hidden; background: var(--surface); }
 .pose-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .pose-art-xl.pose-photo,
-.pose-art-player.pose-photo { width: min(22rem, 80vw); aspect-ratio: 4 / 3; height: auto; }
-.player-visual .pose-art-player.pose-photo { width: min(16rem, 44vw, 34vh); aspect-ratio: 4 / 3; }
+.pose-art-player.pose-photo,
+.pose-art-xl.pose-nophoto,
+.pose-art-player.pose-nophoto { width: min(22rem, 80vw); aspect-ratio: 4 / 3; height: auto; }
+.player-visual .pose-art-player.pose-photo,
+.player-visual .pose-art-player.pose-nophoto { width: min(16rem, 44vw, 28dvh); aspect-ratio: 4 / 3; }
+
+.pose-nophoto {
+  display: grid;
+  place-items: center;
+  padding: 0.75rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--c, var(--accent)) 16%, var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--accent)) 22%, transparent);
+}
+
+.nophoto-name {
+  color: var(--text);
+  font: 600 clamp(1.25rem, 3.4vw, 1.875rem)/1.15 var(--font-display);
+  letter-spacing: -0.01em;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.dark .pose-nophoto,
+.band-dark .pose-nophoto { background: color-mix(in srgb, var(--c, var(--accent)) 26%, #1d1d1f); }
 
 .pose-figure { display: flex; justify-content: center; margin: 0.5rem 0 1rem; }
 
@@ -2508,12 +2562,13 @@ button.toast { cursor: pointer; }
 
 .tour-track::-webkit-scrollbar { display: none; }
 
+/* Every card has the same visual height, so each heading starts on the same line. */
 .tour-card {
-  display: flex;
+  --tour-visual-h: clamp(17rem, 30vw, 24rem);
+  display: grid;
   flex: none;
-  flex-direction: column;
+  grid-template-rows: var(--tour-visual-h) auto;
   width: min(86vw, 56rem);
-  aspect-ratio: 16 / 10;
   border-radius: 1.75rem;
   background: var(--surface);
   overflow: hidden;
@@ -2522,7 +2577,6 @@ button.toast { cursor: pointer; }
 
 .tour-visual {
   display: flex;
-  flex: 1;
   align-items: center;
   justify-content: center;
   gap: 1.5rem;
@@ -2531,10 +2585,15 @@ button.toast { cursor: pointer; }
   overflow: hidden;
 }
 
-.tour-visual .mock { margin: 0; padding: 1.25rem; border-radius: 1.25rem; max-width: 22rem; }
+.tour-visual .mock { margin: 0; padding: 1rem; border-radius: 1.25rem; max-width: 22rem; max-height: 100%; overflow: hidden; font-size: 0.875rem; }
+.tour-visual .mock .card { padding: 0.75rem 1rem; font-size: 0.8125rem; }
+.tour-visual .mock .mock-title { font-size: 1.125rem; }
+.tour-visual .mock .ring-wrap { width: min(8.5rem, 100%); margin-top: 0.5rem; }
+.tour-visual .mock .player-clock { font-size: 1.75rem; }
+.tour-visual .pacer-preview.big { width: min(14rem, 60%); }
 .tour-visual.pair > * { flex: 1 1 0; min-width: 0; }
-.tour-visual .pose-art-xl { width: min(13rem, 30vw); }
-.tour-copy { padding: 0 1.75rem 1.75rem; }
+.tour-visual .pose-art-xl { width: min(16rem, 34vw); }
+.tour-copy { padding: 1.25rem 1.75rem 1.75rem; }
 .tour-copy h3 { margin: 0 0 0.375rem; font-size: clamp(1.375rem, 2.6vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }
 .tour-copy p { margin: 0; color: var(--text-2); }
 
@@ -2646,7 +2705,7 @@ button.toast { cursor: pointer; }
 }
 
 @media (max-width: 40em) {
-  .tour-card { aspect-ratio: auto; min-height: 30rem; }
+  .tour-card { --tour-visual-h: 26rem; }
   .tour-visual.pair { flex-direction: column; }
   .tour-visual .mock { max-width: 100%; }
 }
@@ -2809,6 +2868,8 @@ button.toast { cursor: pointer; }
 .progress-empty { margin-bottom: 1.25rem; }
 .btn-row.centre { justify-content: center; }
 
+.bento-stack { display: grid; gap: 1.25rem; align-content: start; }
+
 @media (min-width: 64em) {
   .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bento-tile.wide { grid-column: 1 / -1; }
@@ -2942,7 +3003,8 @@ button.toast { cursor: pointer; }
   .pacer-stage { width: min(56vh, 28rem); }
   .player-visual .pose-art-player,
   .player-visual.has-art .ring-wrap { width: min(20rem, 36vh); }
-  .player-visual .pose-art-player.pose-photo { width: min(28rem, 48vh); }
+  .player-visual .pose-art-player.pose-photo,
+  .player-visual .pose-art-player.pose-nophoto { width: min(28rem, 40dvh); }
   .player-controls { gap: 3rem; }
 }
 
@@ -2961,6 +3023,13 @@ button.toast { cursor: pointer; }
 }
 
 /* Landscape phones: the player sits side by side. */
+@media (max-height: 42em) {
+  .ctl.main { width: 4rem; height: 4rem; }
+  .player-controls { gap: 1.5rem; }
+  .player-title { font-size: clamp(1.375rem, 4.5vw, 2rem); }
+  .player-cue { font-size: 1rem; margin-top: 0.5rem; }
+}
+
 @media (orientation: landscape) and (max-height: 32em) {
   .player-main {
     flex-direction: row;

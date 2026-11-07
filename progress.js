@@ -164,12 +164,14 @@ function legend() {
 function responsive(host, draw) {
   if ("ResizeObserver" in window) {
     let last = 0;
+    let frame = 0;
+    // Draw in the next frame, never inside the observer callback, so drawing cannot loop the observer.
     new ResizeObserver(([entry]) => {
       const w = Math.round(entry.contentRect.width);
-      if (w && w !== last) {
-        last = w;
-        draw();
-      }
+      if (!w || w === last) return;
+      last = w;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(draw);
     }).observe(host);
   } else {
     requestAnimationFrame(draw);
@@ -374,5 +376,8 @@ function renderProgress() {
   return el("div", { class: "page progress-page" }, head,
     el("div", { class: "bento" },
       summaryTile(store), periodTile(store), chartTile(store), heatmapTile(store), journeyTile(),
-      mostTile(store), badgesTile(store), historyTile(store), dataTile()));
+      mostTile(store),
+      // Badges and Your data share the right column beside the tall Most practised tile.
+      el("div", { class: "bento-stack" }, badgesTile(store), dataTile()),
+      historyTile(store)));
 }

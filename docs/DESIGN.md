@@ -36,7 +36,7 @@ Hash routes such as `#/poses/tadasana` so refresh, Back and shared links work on
 | Safety rules as data in plan.js | Reviewable by a yoga teacher without reading interface code. |
 | Sessions keep running when a pose is left out | A visitor with one condition still gets a full practice. A session is offered only if at least half its poses remain. |
 | Voice recorded per sentence | A wording change only needs the changed sentences recorded again. Missing lines fall back to the browser voice. |
-| asanakit figures | MIT licence, one consistent style, 121 poses. Pocket Yoga art is not licensed for reuse. |
+| Real photos, no drawn figures | Visitors found the drawn figures unclear. Photos come from Pexels after a check of every pose. Poses without a good photo show a calm name card. Pocket Yoga art is not licensed for reuse. |
 | Original writing only | The trainer manual used as a fact source is copyrighted. Nothing is copied from it. |
 
 ## Asset pipeline
@@ -44,5 +44,7 @@ Hash routes such as `#/poses/tadasana` so refresh, Back and shared links work on
 | Asset | Tool | Command |
 | --- | --- | --- |
 | Voice clips | Kokoro bf_emma | `node tools/voice_lines.js > lines.json` then `~/tts/kokoro-env/bin/python tools/voice_build.py lines.json` |
-| Pose figures | asanakit, silhouette style, pose files from commit eea40ef | `npx @franzenzenhofer/asanakit render <pose.yaml> -o figures/<id>.svg --style silhouette --width 400 --height 400` |
-| Photos and video | Pexels, Unsplash, Mixkit | See media/CREDITS.md |
+| Pose photos | Pexels, reviewed by hand | See photos/poses/CREDITS.md and manifest.json |
+| Music | Singing bowls made in code, Om chant CC0, four Mixkit loops | `python3 tools/bowls.py`. See audio/CREDITS.md |
+| Share card | Pillow | `python3 tools/og.py` |
+| Photos and video | Pexels and Mixkit | See media/CREDITS.md |

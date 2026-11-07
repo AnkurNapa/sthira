@@ -143,7 +143,7 @@ const CONDITIONS = {
     tip: "Keep the neck in line with the spine. Look down rather than up in standing poses.",
   },
   knee: {
-    avoid: ["malasana", "vajrasana", "garudasana", "gomukhasana", "janu-sirsasana", "ushtrasana", "ananda-balasana", "dhanurasana", "baddha-konasana", "shashankasana", "kaliasana", "anjaneyasana", "ardha-hanumanasana", "skandasana", "tada-kapotasana", "eka-pada-rajakapotasana", "parighasana", "uttana-pristhasana", "urdhva-prasarita-eka-padasana", "uttana-shishosana"],
+    avoid: ["malasana", "vajrasana", "garudasana", "gomukhasana", "janu-sirsasana", "ushtrasana", "ananda-balasana", "dhanurasana", "baddha-konasana", "shashankasana", "kaliasana", "anjaneyasana", "ardha-hanumanasana", "skandasana", "tada-kapotasana", "eka-pada-rajakapotasana", "parighasana", "uttana-pristhasana", "urdhva-prasarita-eka-padasana", "uttana-shishosana", "vrikshasana"],
     avoidBreaths: [],
     tip: "Pad the knees with a folded blanket. Keep the bend in Chair and Warrior poses small.",
   },
@@ -153,7 +153,7 @@ const CONDITIONS = {
     tip: "Do Cat-Cow on fists or forearms. In sun salutations, use a wall instead of the floor.",
   },
   shoulder: {
-    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana", "uttana-shishosana", "parsva-balasana", "makara-adho-mukha", "adho-mukha"],
+    avoid: ["vasisthasana", "phalakasana", "gomukhasana", "urdhva-mukha", "halasana", "sarvangasana", "garudasana", "eka-pada-adho-mukha", "ardha-pincha-mayurasana", "chaturanga", "purvottanasana", "bakasana", "sarpasana", "chakrasana", "uttana-shishosana", "parsva-balasana", "makara-adho-mukha", "adho-mukha", "uttana-pristhasana"],
     avoidBreaths: [],
     tip: "Keep the arms below shoulder height when it hurts. Hands on hips is fine.",
   },
@@ -219,7 +219,7 @@ function sessionIsSafe(session, avoid) {
 }
 
 // The player drops the whole sun salutation when any of these is avoided.
-const SUN_STEP_POSES = ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha"];
+const SUN_STEP_POSES = ["uttanasana", "phalakasana", "bhujangasana", "adho-mukha", "anjaneyasana"];
 
 /** True when a session still works after the player leaves out unsafe poses:
  *  at least half its poses remain. */

@@ -1,6 +1,6 @@
 # Sthira requirements
 
-Version 0.1. Owner: Ankur Napa. Status: in build.
+Version 0.3.3. Owner: Ankur Napa. Status: live.
 
 ## 1. Purpose
 
@@ -22,15 +22,17 @@ Sthira is a free website for people who practise yoga alone at home. It teaches 
 | FR-01 | A first visit shows a welcome note with the safety disclaimer. | Shown once. Links to the doctor article. |
 | FR-02 | A 10 question quiz finds the dosha mix plus experience, goal, time and health conditions. | One question per screen. Back works. Conditions allow several answers. |
 | FR-03 | The plan shows the dosha profile, health tips, a pose list, breathing and a 6 month journey in 4 stages. | Rest only plans show breathing and relaxation only. |
-| FR-04 | Every pose has steps, mistakes to avoid, an easier version, benefits and who should skip it. | 70 poses. A figure where one is available. |
-| FR-05 | Guided sessions play step by step with a timer, voice and a chime. | Timer stays right when the screen locks. Sided poses play right then left. |
+| FR-04 | Every pose has steps, key alignment cues, mistakes to avoid, an easier version, benefits and who should skip it. | 89 poses. A real photo where one is available, otherwise a calm name card. |
+| FR-05 | Guided sessions play step by step with a timer, voice, alignment cues and a chime. Every practice follows asana, pranayama, then meditation. | Timer stays right when the screen locks. Sided poses play right then left. Cues are spoken during each hold. |
 | FR-06 | Poses that are unsafe for the visitor are left out of sessions, flows and the pacer. | Verified by tests for every condition. |
 | FR-07 | A flow generator builds a practice from length, level and focus. | Total time within 25 per cent of the request. Always ends in relaxation. |
 | FR-08 | Visitors can build, save, edit and delete their own flows. | Warns about avoided poses. Offers to add relaxation. |
-| FR-09 | A breath pacer guides 7 breathing practices. | Holds are removed when the plan says no holds. |
+| FR-09 | A breath pacer guides 18 breathing practices. | Holds are removed when the plan says no holds. Practices the plan avoids cannot start. |
 | FR-10 | Progress shows rings, a streak, badges, history and journey progress. | Stored on the device only. |
-| FR-11 | Learn articles cover safety, set up, breathing, habit and background. | 9 articles. |
-| FR-12 | Spoken cues use the Emma voice. | Falls back to the browser voice for any line without a recording. |
+| FR-11 | Learn articles cover safety, set up, breathing, habit, meditation, chants and background. | 22 articles. |
+| FR-12 | Spoken cues use the Emma voice. | Falls back to the browser voice for any line without a recording or when a clip fails. |
+| FR-13 | Calm background music: singing bowls by default, Om chanting and four more. | Plays under meditation and relaxation by default. Dips while the voice speaks. Can be turned off. |
+| FR-14 | A progress dashboard with asana, pranayama and meditation rings. | Data stays on the device. Export, import and reset. |
 
 ## 4. Non functional requirements
 

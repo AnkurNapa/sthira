@@ -46,10 +46,12 @@ function renderSessions() {
 function leftOutNote(flat) {
   const poses = flat.leftOut.filter((st) => st.p || st.uses).length;
   const sun = flat.leftOut.some((st) => st.sun);
-  const other = flat.leftOut.some((st) => st.t && !st.uses);
+  const breaths = flat.leftOut.filter((st) => st.breath).length;
+  const other = flat.leftOut.some((st) => st.t && !st.uses && !st.breath);
   const parts = [];
   if (poses) parts.push(`${plural(poses, "pose")} left out for your safety.`);
   if (sun) parts.push("The sun salutation is left out too.");
+  if (breaths) parts.push(`${breaths === 1 ? "A breathing step is" : `${breaths} breathing steps are`} left out for your safety.`);
   if (other) parts.push("Movement steps are left out until your doctor clears you.");
   return parts.join(" ");
 }
@@ -229,13 +231,14 @@ function showPoseSheet(id, routeKey) {
   const reason = planContext().avoid.has(pose.id) ? avoidReason(pose.id, "pose") : "";
   return openSheet(el("div", { class: "sheet-content" },
     reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}.`),
-    hasPoseArt(pose.id) && el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
-    el("div", { class: "pose-head" }, !hasPoseArt(pose.id) && poseArt(pose.id, { size: "xl" }),
+    el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
+    el("div", { class: "pose-head" },
       el("div", { class: "pose-head-text" }, el("h2", { class: "sheet-title" }, pose.sk), el("p", { class: "sheet-sub" }, pose.en), reviewedLine()),
       heartButton("pose", pose.id, pose.en)),
     el("div", { class: "tags" }, el("span", { class: "tag" }, cat.name), el("span", { class: "tag" }, LEVELS[pose.lvl]), pose.sided && el("span", { class: "tag" }, "Both sides")),
     pose.sided && el("p", { class: "note" }, "Do the right side first. Then repeat on the left."),
     infoCard("How to do it", el("ol", { class: "card steps" }, pose.steps.map((s) => el("li", {}, s)))),
+    typeof ALIGN !== "undefined" && own(ALIGN, pose.id) && infoCard("Key alignment", el("ul", { class: "card bullets" }, ALIGN[pose.id].map((c) => el("li", {}, c)))),
     infoCard("Avoid injury", el("ul", { class: "card caution bullets" }, pose.avoid.map((s) => el("li", {}, s))), "caution-title"),
     infoCard("Make it easier", pose.easier),
     infoCard("Benefits", pose.benefits),
@@ -271,19 +274,34 @@ function renderBreathe() {
     el("div", { class: "grid grid-breaths" }, BREATHS.map(breathCard)));
 }
 
+/** The how to lines. With no holds, any sentence about holding the breath is left out. */
+function howLines(breath, noHolds) {
+  if (!noHolds) return breath.how;
+  return breath.how
+    .map((line) => line.split(/(?<=[.!?])\s+/).filter((sentence) => !/\bhold/i.test(sentence)).join(" "))
+    .filter(Boolean);
+}
+
 function showBreathSheet(id, routeKey) {
   const breath = BREATH_BY_ID[id];
   const ctx = planContext();
   const reason = ctx.avoidBreaths.has(breath.id) ? avoidReason(breath.id, "breath") : "";
   const hasHolds = breath.pattern.some(([label]) => /^hold/i.test(label));
+  const allowed = breathAllowed(breath.id, ctx);
+  const alternative = allowed ? null : safeBreathFor(ctx);
+  const start = allowed
+    ? el("div", { class: "btn-row" }, el("button", { type: "button", class: "pill", onclick: () => openPacer(breath, breath.rounds) }, "Start"))
+    : el("div", { class: "card caution" },
+      el("p", {}, `This practice is not in your plan, so it cannot be started here. Try ${alternative.name} instead.`),
+      el("div", { class: "btn-row" }, el("a", { class: "pill", href: `#/breathe/${alternative.id}` }, `Open ${alternative.name}`)));
   return openSheet(el("div", { class: "sheet-content" },
-    reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}.`),
+    !allowed && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason || "your health answers"}.`),
     el("h2", { class: "sheet-title" }, breath.name),
     el("p", { class: "sheet-sub" }, `${breath.sk} · ${breathMeta(breath)}`),
     el("p", { class: "lede" }, breath.about),
     ctx.noHolds && hasHolds && el("p", { class: "note caution-note" }, icon("alert", 16), "Holds are left out for you. The pacer moves straight from in to out."),
-    el("div", { class: "btn-row" }, el("button", { type: "button", class: "pill", onclick: () => openPacer(breath, breath.rounds) }, "Start")),
-    infoCard("How", el("ol", { class: "card steps" }, breath.how.map((s) => el("li", {}, s)))),
+    start,
+    infoCard("How", el("ol", { class: "card steps" }, howLines(breath, ctx.noHolds).map((s) => el("li", {}, s)))),
     infoCard("Caution", breath.caution, "caution")), { label: breath.name, routeKey });
 }
 
@@ -291,7 +309,7 @@ function showBreathSheet(id, routeKey) {
 
 function articleCard(article) {
   return el("a", { class: "article-card", href: `#/learn/${article.id}` },
-    el("span", { class: "article-icon", "aria-hidden": "true" }, article.icon),
+    el("span", { class: "article-icon", "aria-hidden": "true" }, icon("learn", 22)),
     el("span", { class: "article-card-title" }, article.title),
     el("span", { class: "muted" }, article.sub));
 }
@@ -327,7 +345,7 @@ function showArticleSheet(id, routeKey) {
   const article = ARTICLE_BY_ID[id];
   const pic = ARTICLE_PHOTOS[id] ? photo(ARTICLE_PHOTOS[id], { eager: true, sizes: "(min-width: 834px) 720px, 100vw", cls: "article-photo" }) : null;
   return openSheet(el("article", { class: "sheet-content reading" },
-    pic || el("p", { class: "article-icon big", "aria-hidden": "true" }, article.icon),
+    pic,
     REVIEWED_ARTICLES.includes(id) && reviewedLine(),
     el("h2", { class: "sheet-title" }, article.title),
     el("p", { class: "sheet-sub" }, article.sub),

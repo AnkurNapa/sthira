@@ -79,6 +79,9 @@ function heroSection(now) {
 
 /* 3. Offer strip */
 
+/** Minutes from the real length of the session, so the heading and the text always agree. */
+const quickMinutes = (quick) => Math.max(1, Math.round(quick.flat.secs / 60));
+
 function offerStrip(now) {
   const quick = quickestSession();
   const restOnly = planContext().restOnly;
@@ -89,8 +92,8 @@ function offerStrip(now) {
         el("p", {}, readPlan() ? "See your poses, your breathing and the next stage of your journey." : "Ten short questions. A plan that fits your body and leaves out unsafe poses."),
         quizPill()),
       el("div", { class: "offer" },
-        el("h2", { class: "offer-title" }, `Start in ${Math.max(1, Math.round(quick.flat.secs / 60))} minutes.`),
-        el("p", {}, restOnly ? `${quick.s.name} is calm and safe while you rest.` : `${quick.s.name} is the shortest session. ${quick.s.about.split(". ")[0]}.`),
+        el("h2", { class: "offer-title" }, `Start in ${plural(quickMinutes(quick), "minute")}.`),
+        el("p", {}, restOnly ? `${quick.s.name} is calm and safe while you rest.` : `${quick.s.name} takes about ${plural(quickMinutes(quick), "minute")}. ${quick.s.focus}.`),
         el("a", { class: "pill", href: `#/sessions/${quick.s.id}` }, "Start now"))));
 }
 
@@ -131,7 +134,9 @@ function upNextCard(now) {
 function resumeCard() {
   const r = getResume();
   if (!r) return null;
-  const session = SESSION_BY_ID[r.id];
+  // Saved and generated flows resume too. A flow that no longer exists is not offered.
+  const session = findSession(r.id);
+  if (!session) return null;
   return el("a", { class: "upnext resume", href: `#/sessions/${session.id}` },
     el("span", { class: "eyebrow" }, "Continue where you left off"),
     el("span", { class: "upnext-name" }, session.name),
@@ -146,7 +151,7 @@ function progressBar(pct, label) {
 
 function weekSection(now) {
   const store = readStore();
-  if (!store.history.length && !readPlan()) return null;
+  if (!store.history.length && !readPlan() && !getResume()) return null;
   const rings = weeklyRings(now);
   return band("band-white week",
     chapterTitle("Your week.", streakLine(store)),
@@ -158,7 +163,7 @@ function weekSection(now) {
 /* 4. Practise safely */
 
 function avoidMock() {
-  const pose = POSE_BY_ID.virabhadrasana1;
+  const pose = POSE_BY_ID.virabhadrasana2;
   return el("div", { class: "mock mock-sheet", "aria-hidden": "true" },
     el("p", { class: "mock-title" }, pose.sk),
     el("p", { class: "muted" }, pose.en),
@@ -231,9 +236,14 @@ function poseChapter() {
       card.style.setProperty("--c", cat.color);
       return el("div", { role: "listitem" }, card);
     })),
-    el("div", { class: "pod-row" },
-      el("div", { class: "pod" }, el("h3", { class: "block-title" }, "Pose of the day"), poseCard(poseOfDay())),
-      el("div", { class: "photo-tile tall" }, photo("photo-tree-pose-by-window", { sizes: "(min-width: 834px) 40vw, 100vw" }))));
+    podRow(poseOfDay()));
+}
+
+/** The pose of the day with its own photo (or the calm card), never a photo of a different pose. */
+function podRow(pose) {
+  return el("div", { class: "pod-row" },
+    el("div", { class: "pod" }, el("h3", { class: "block-title" }, "Pose of the day"), poseCard(pose)),
+    el("a", { class: "pod-visual", href: `#/poses/${pose.id}`, "aria-label": `Open ${pose.en}` }, poseArt(pose.id, { size: "xl" })));
 }
 
 /* 7. Breathing band */

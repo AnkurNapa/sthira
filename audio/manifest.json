@@ -1,0 +1,69 @@
+[
+ {
+  "id": "bowls",
+  "name": "Singing bowls",
+  "files": {
+   "m4a": "audio/bowls.m4a",
+   "ogg": "audio/bowls.ogg"
+  },
+  "duration": 96.0,
+  "credit": "Synthesised for Sthira with tools/bowls.py",
+  "source": "Original sound made for Sthira",
+  "default": true
+ },
+ {
+  "id": "om",
+  "name": "Om chanting",
+  "files": {
+   "m4a": "audio/om.m4a",
+   "ogg": "audio/om.ogg"
+  },
+  "duration": 90,
+  "credit": "OM vibration by an unnamed uploader (Internet Archive item OmVibration), CC0 1.0",
+  "source": "https://archive.org/details/OmVibration"
+ },
+ {
+  "id": "ambient",
+  "name": "Soft ambient pad",
+  "files": {
+   "m4a": "audio/ambient.m4a",
+   "ogg": "audio/ambient.ogg"
+  },
+  "duration": 90,
+  "credit": "Meditation by Arulo, Mixkit Free Music Licence",
+  "source": "https://mixkit.co/free-stock-music/tag/meditation/"
+ },
+ {
+  "id": "flute",
+  "name": "Gentle flute",
+  "files": {
+   "m4a": "audio/flute.m4a",
+   "ogg": "audio/flute.ogg"
+  },
+  "duration": 90,
+  "credit": "Relaxation 05 by Lily J, Mixkit Free Music Licence",
+  "source": "https://mixkit.co/free-stock-music/tag/meditation/"
+ },
+ {
+  "id": "nature",
+  "name": "Quiet rain",
+  "files": {
+   "m4a": "audio/nature.m4a",
+   "ogg": "audio/nature.ogg"
+  },
+  "duration": 90,
+  "credit": "Long rain ambience, Mixkit Sound Effects Free Licence",
+  "source": "https://mixkit.co/free-sound-effects/rain/"
+ },
+ {
+  "id": "ocean",
+  "name": "Slow ocean waves",
+  "files": {
+   "m4a": "audio/ocean.m4a",
+   "ogg": "audio/ocean.ogg"
+  },
+  "duration": 90,
+  "credit": "Sea waves on a rocky shore, Mixkit Sound Effects Free Licence",
+  "source": "https://mixkit.co/free-sound-effects/waves/"
+ }
+]

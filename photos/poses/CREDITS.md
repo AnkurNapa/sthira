@@ -45,3 +45,18 @@ All images are from Pexels and used under the Pexels License (free to use and mo
 | surya-9 | Monstera Production | https://www.pexels.com/photo/5331220/ |
 | surya-10 | Alexy Almond | https://www.pexels.com/photo/3758043/ |
 | surya-11 | Marta Wave | https://www.pexels.com/photo/6453400/ |
+| virabhadrasana1 | ph.galtri | https://www.pexels.com/photo/11775738/ |
+| navasana | Alexy Almond | https://www.pexels.com/photo/3758138/ |
+| prasarita | Miriam Alonso | https://www.pexels.com/photo/7592990/ |
+| ardha-matsyendrasana | Alexy Almond | https://www.pexels.com/photo/3756514/ |
+| sukhasana | Yan Krukau | https://www.pexels.com/photo/4458008/ |
+| viparita-karani | PNW Production | https://www.pexels.com/photo/8250451/ |
+| parivrtta-janu-sirsasana | Vi Nguyen | https://www.pexels.com/photo/17572155/ |
+| skandasana | MART PRODUCTION | https://www.pexels.com/photo/8033077/ |
+| eka-pada-adho-mukha | Anete Lusina | https://www.pexels.com/photo/4793342/ |
+| makara-adho-mukha | Klaus Nielsen | https://www.pexels.com/photo/6303455/ |
+| vyaghrasana | Vi Nguyen | https://www.pexels.com/photo/17572171/ |
+| ardha-chakrasana | Elina Fairytale | https://www.pexels.com/photo/3822355/ |
+| vajrasana | Vi Nguyen | https://www.pexels.com/photo/17572143/ |
+| parighasana | Vi Nguyen | https://www.pexels.com/photo/17572129/ |
+| parsva-sukhasana | Yan Krukau | https://www.pexels.com/photo/4458015/ |
