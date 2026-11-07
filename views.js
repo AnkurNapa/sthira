@@ -224,7 +224,7 @@ function showPoseSheet(id, routeKey) {
     reason && el("p", { class: "note caution-note" }, icon("alert", 16), `Not in your plan because of: ${reason}.`),
     FIGURE_IDS.has(pose.id) && el("div", { class: "pose-figure" }, poseArt(pose.id, { size: "xl" })),
     el("div", { class: "pose-head" }, !FIGURE_IDS.has(pose.id) && poseArt(pose.id, { size: "xl" }),
-      el("div", { class: "pose-head-text" }, el("h2", { class: "sheet-title" }, pose.sk), el("p", { class: "sheet-sub" }, pose.en)),
+      el("div", { class: "pose-head-text" }, el("h2", { class: "sheet-title" }, pose.sk), el("p", { class: "sheet-sub" }, pose.en), reviewedLine()),
       heartButton("pose", pose.id, pose.en)),
     el("div", { class: "tags" }, el("span", { class: "tag" }, cat.name), el("span", { class: "tag" }, LEVELS[pose.lvl]), pose.sided && el("span", { class: "tag" }, "Both sides")),
     pose.sided && el("p", { class: "note" }, "Do the right side first. Then repeat on the left."),
@@ -292,13 +292,30 @@ function articleCard(article) {
 function renderLearn() {
   return el("div", { class: "page" },
     pageHead("Learn", "Practise with confidence.", "Short guides on safety, breath and building a habit."),
+    el("div", { class: "photo-tile wide video-tile learn-banner" }, loopVideo("hands-mudra-detail", { eager: true })),
     el("div", { class: "grid grid-articles" }, ARTICLES.map(articleCard)));
 }
 
+// A header photo for each article. Articles not listed show their icon only.
+const ARTICLE_PHOTOS = {
+  start: "photo-seated-on-mat-window",
+  safety: "photo-senior-lunge-with-block",
+  health: "photo-prayer-hands-outdoors",
+  setup: "photo-props-cork-blocks",
+  breath: "photo-seated-breathing-wicker-chair",
+  class: "photo-rolled-mat-sunlight",
+  limbs: "photo-seated-meditation-sunlit",
+  habit: "photo-calm-room-plank-feet",
+  glossary: "photo-bearded-man-meditating",
+};
+const REVIEWED_ARTICLES = ["safety", "health"];
+
 function showArticleSheet(id, routeKey) {
   const article = ARTICLE_BY_ID[id];
+  const pic = ARTICLE_PHOTOS[id] ? photo(ARTICLE_PHOTOS[id], { eager: true, sizes: "(min-width: 834px) 720px, 100vw", cls: "article-photo" }) : null;
   return openSheet(el("article", { class: "sheet-content reading" },
-    el("p", { class: "article-icon big", "aria-hidden": "true" }, article.icon),
+    pic || el("p", { class: "article-icon big", "aria-hidden": "true" }, article.icon),
+    REVIEWED_ARTICLES.includes(id) && reviewedLine(),
     el("h2", { class: "sheet-title" }, article.title),
     el("p", { class: "sheet-sub" }, article.sub),
     el("div", { class: "prose" }, articleBlocks(article.body))), { label: article.title, routeKey });

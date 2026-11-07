@@ -12,7 +12,7 @@ function navSections() {
   return {
     plan: [
       { title: "My Plan", links: [link("Your plan", "#/plan"), link("Your journey", "#/plan", { scroll: "journey" }), link("Badges", "#/plan", { scroll: "badges" }), link("History", "#/plan", { scroll: "history" })] },
-      { title: "More", links: [link("Today's flow", `#/sessions/${TODAY_FLOW_ID}`), link("Retake the quiz", "#/quiz"), link("Settings", null, { action: openSettings })] },
+      { title: "More", links: [link("Progress", "#/progress"), link("Today's flow", `#/sessions/${TODAY_FLOW_ID}`), link("Retake the quiz", "#/quiz"), link("Settings", null, { action: openSettings })] },
     ],
     sessions: [
       { title: "Guided sessions", links: SESSIONS.map((s) => link(s.name, `#/sessions/${s.id}`)) },
@@ -155,7 +155,7 @@ function menuList(items) {
 
 function menuTopLevel(panel, close) {
   const sections = navSections();
-  return menuList(PAGES.map((page) => {
+  return menuList(NAV_PAGES.map((page) => {
     if (!sections[page.id]) return el("a", { href: `#/${page.id}`, class: "menu-link", "data-page": page.id, "aria-current": page.id === renderedPage ? "page" : null, onclick: (e) => { e.preventDefault(); close(`#/${page.id}`); } }, page.label);
     return el("button", { type: "button", class: "menu-link has-children", "aria-current": page.id === renderedPage ? "page" : null, onclick: () => showSubmenu(panel, page, close) }, page.label, icon("chevron", 18));
   }));
@@ -220,7 +220,7 @@ function paintSubnav() {
   if (!slot) return;
   slot.replaceChildren(readPlan() ? el("a", { class: "pill small", href: "#/plan" }, "My Plan") : el("a", { class: "pill small", href: "#/quiz" }, "Take the quiz"));
   const page = PAGES.find((p) => p.id === renderedPage);
-  document.getElementById("subnav-title").textContent = page && page.id !== "today" ? page.label : "Sthira";
+  document.getElementById("subnav-title").textContent = page && !["today", "welcome"].includes(page.id) ? page.label : "Sthira";
 }
 
 function watchSubnav(topnav, subnav) {
@@ -236,7 +236,7 @@ function buildNav() {
   const topnav = el("header", { class: "topnav" },
     el("div", { class: "topnav-inner" },
       el("a", { class: "wordmark", href: "#/today" }, "Sthira"),
-      el("nav", { class: "topnav-links", "aria-label": "Pages" }, PAGES.map(navItem)),
+      el("nav", { class: "topnav-links", "aria-label": "Pages" }, NAV_PAGES.map(navItem)),
       menuBtn));
   const subnav = el("div", { class: "subnav" },
     el("div", { class: "subnav-inner" }, el("p", { class: "subnav-title", id: "subnav-title" }, "Sthira"), el("div", { id: "subnav-action" })));

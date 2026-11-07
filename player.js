@@ -233,6 +233,15 @@ function runPlayer(session, steps, startIdx) {
   let idx = startIdx;
   let finished = false;
   let earned = [];
+  // Seconds spent in each pose, added when a step ends.
+  const poseTime = {};
+  let stepStartMs = 0;
+  const closeStep = () => {
+    const s = steps[idx];
+    const secs = (clock.playedMs - stepStartMs) / 1000;
+    if (s && s.poseId && secs > 0) poseTime[s.poseId] = (poseTime[s.poseId] || 0) + secs;
+    stepStartMs = clock.playedMs;
+  };
   let lastJump = 0;
   const clock = makeCountdown({ onTick: paintTime, onEnd: () => go(idx + 1) });
 
@@ -276,6 +285,7 @@ function runPlayer(session, steps, startIdx) {
 
   function go(n) {
     if (finished) return;
+    closeStep();
     if (n >= steps.length) {
       finish();
       return;
@@ -327,7 +337,7 @@ function runPlayer(session, steps, startIdx) {
     finished = true;
     clock.stop();
     stopSpeech();
-    recordSession({ session, minutes: clock.playedMs / 60000, completed: true, dateKey });
+    recordSession({ session, minutes: clock.playedMs / 60000, completed: true, dateKey, poses: poseTime });
     clearResume();
     view.replaceChildren(completionView(session, clock.playedMs, () => sheet.close()));
     chime();
@@ -349,7 +359,8 @@ function runPlayer(session, steps, startIdx) {
     playerOpen = false;
     if (!finished) {
       if (idx > 0) saveResume(session.id, idx);
-      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey });
+      closeStep();
+      recordSession({ session, minutes: clock.playedMs / 60000, completed: false, dateKey, poses: poseTime });
       earned = afterPractice();
     }
     celebrateLater(earned);
